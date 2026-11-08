@@ -1,4 +1,5 @@
 import { calculate, decimal, defaultSettings, makerWorldModel } from './calc.mjs';
+import { formatCurrency, installCurrencyMasks } from './currency.mjs';
 
 const $ = id => document.getElementById(id);
 const formatMoney = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -9,6 +10,7 @@ const settingsKey = 'jh3-preferences-v2';
 const oldSettingsKey = 'jh3-preferences-v1';
 const draftKey = 'jh3-draft-v2';
 const historyKey = 'jh3-history-v1';
+const electricityUpdateKey = 'jh3-energy-reference-oct-2026-v1';
 const logo = new Image();
 logo.src = './logo.webp';
 
@@ -45,6 +47,16 @@ function validSettings(candidate) {
 }
 
 settings = validSettings(storeGet(settingsKey) || storeGet(oldSettingsKey));
+// Atualiza os dois parâmetros de energia uma única vez em aparelhos com
+// configurações antigas, sem alterar o custo do material nem a margem.
+if (!storeGet(electricityUpdateKey)) {
+  if (settings) {
+    settings = { ...settings, tariff: defaultSettings.tariff, watts: defaultSettings.watts };
+    storeSet(settingsKey, settings);
+  }
+  storeSet(electricityUpdateKey, true);
+}
+installCurrencyMasks();
 const loaded = storeGet(historyKey);
 history = Array.isArray(loaded) ? loaded.filter(x => x && typeof x.name === 'string' && Number.isFinite(x.price)).slice(0, 8) : [];
 
@@ -69,7 +81,9 @@ function updateSetupNotice() {
 
 function fillSettings() {
   for (const key of keys) {
-    $(key).value = String(settings?.[key] ?? defaultSettings[key]).replace('.', ',');
+    const input = $(key);
+    const value = settings?.[key] ?? defaultSettings[key];
+    input.value = input.matches('[data-currency]') ? formatCurrency(value) : String(value).replace('.', ',');
   }
 }
 fillSettings();
@@ -120,7 +134,11 @@ function restoreDraft() {
   const draft = storeGet(draftKey);
   if (draft && typeof draft === 'object') {
     for (const key of draftIds) {
-      if (typeof draft[key] === 'string') $(key).value = draft[key];
+      if (typeof draft[key] === 'string') {
+        $(key).value = $(key).matches('[data-currency]') && draft[key].trim()
+          ? formatCurrency(decimal(draft[key]))
+          : draft[key];
+      }
     }
   }
 }
@@ -219,7 +237,10 @@ function renderHistory() {
     button.addEventListener('click', () => {
       $('piece').value = item.name;
       for (const key of ['grams', 'quantity', 'hours', 'minutes', 'extras', 'laborMinutes']) {
-        $(key).value = String(item[key] ?? 0).replace('.', ',');
+        const value = Number(item[key] ?? 0);
+        $(key).value = $(key).matches('[data-currency]')
+          ? formatCurrency(value)
+          : String(value).replace('.', ',');
       }
       saveDraft();
       switchView('quote');
