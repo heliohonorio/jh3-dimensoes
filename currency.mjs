@@ -14,32 +14,25 @@ export function maskCurrency(value) {
   return formatCurrency(Number(digits) / 100);
 }
 
-function digitsBefore(text, caret) {
-  return (text.slice(0, caret).match(/\d/g) || []).length;
-}
-
-function caretAfterDigits(text, count) {
-  if (count <= 0) return Math.max(0, text.indexOf('$') + 2);
-  let seen = 0;
-  for (let i = 0; i < text.length; i++) {
-    if (/\d/.test(text[i]) && ++seen >= count) return i + 1;
-  }
-  return text.length;
-}
-
 export function installCurrencyMasks(root = document) {
   for (const input of root.querySelectorAll('input[data-currency]')) {
     input.setAttribute('autocomplete', 'off');
     input.addEventListener('input', () => {
       const previous = input.value;
-      const cursor = input.selectionStart ?? previous.length;
-      const count = digitsBefore(previous, cursor);
       const formatted = maskCurrency(previous);
-      if (formatted !== previous) {
-        input.value = formatted;
-        const position = caretAfterDigits(formatted, count);
-        try { input.setSelectionRange(position, position); } catch {}
-      }
+      if (formatted !== previous) input.value = formatted;
+      // No teclado numérico do iPhone, manter o cursor no final evita
+      // que o próximo dígito apareça antes da vírgula.
+      try { input.setSelectionRange(input.value.length, input.value.length); } catch {}
+    });
+    input.addEventListener('beforeinput', event => {
+      if (event.inputType !== 'deleteContentBackward' ||
+          input.selectionStart !== input.value.length ||
+          input.selectionEnd !== input.value.length) return;
+      event.preventDefault();
+      const digits = input.value.replace(/\D/g, '').replace(/^0+/, '');
+      input.value = maskCurrency(digits.slice(0, -1));
+      input.dispatchEvent(new Event('input', { bubbles: true }));
     });
     input.addEventListener('paste', event => {
       const pasted = event.clipboardData?.getData('text')?.trim();
