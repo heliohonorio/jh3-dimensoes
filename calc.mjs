@@ -1,11 +1,21 @@
 /**
  * Valores em reais. Custos de materiais e tempo são totais do lote.
- * A porcentagem de lucro é uma margem sobre a venda, não um acréscimo sobre o custo.
+ * Nos orçamentos novos, o lucro é um acréscimo percentual sobre o custo.
+ * A regra antiga de margem sobre a venda permanece apenas para compatibilidade.
  */
 export function decimal(value) {
   if (typeof value === 'number') return Number.isFinite(value) ? value : NaN;
   let raw = String(value ?? '').trim().replace(/^R\$\s*/i, '').replace(/\s+/g, '');
   if (/^\d{1,3}(?:\.\d{3})+,\d{1,2}$/.test(raw)) raw = raw.replace(/\./g, '');
+  if (!/^\d+(?:[.,]\d+)?$/.test(raw)) return NaN;
+  return Number(raw.replace(',', '.'));
+}
+
+// Para lucro personalizado, aceita 1000, 1.000, 2.500,50 e 2500.5.
+export function parsePercentage(value) {
+  if (typeof value === 'number') return Number.isFinite(value) && value >= 0 ? value : NaN;
+  let raw = String(value ?? '').trim().replace(/\s/g, '').replace(/%$/, '');
+  if (/^\d{1,3}(?:\.\d{3})+(?:,\d+)?$/.test(raw)) raw = raw.replace(/\./g, '');
   if (!/^\d+(?:[.,]\d+)?$/.test(raw)) return NaN;
   return Number(raw.replace(',', '.'));
 }
@@ -32,7 +42,7 @@ export function calculate(settings, job) {
       !Number.isInteger(minutes) || minutes > 59 ||
       !Number.isInteger(laborMinutes) || laborMinutes > 100000 ||
       hours + minutes / 60 <= 0 || margin >= 100 || fee >= 100 ||
-      (!usesMarkup && margin + fee >= 100) || (usesMarkup && markup > 1000) ||
+      (!usesMarkup && margin + fee >= 100) ||
       waste > 1000 || failure > 1000) {
     throw new Error('Confira peso, tempo, quantidade e custos. A soma da margem com as taxas deve ser menor que 100%.');
   }
@@ -49,7 +59,7 @@ export function calculate(settings, job) {
     : cost / (1 - (margin + fee) / 100);
   // Arredonda para cima, nunca para baixo da margem pretendida.
   const price = Math.max(Math.ceil((rawPrice - 1e-9) * 100) / 100, minPrice);
-  if (!Number.isFinite(price) || price > 1e12) throw new Error('Os valores informados são muito altos.');
+  if (!Number.isFinite(price)) throw new Error('O percentual ou o custo informado é grande demais para calcular com segurança.');
   const fees = price * fee / 100;
   const profit = price - cost - fees;
   return {
