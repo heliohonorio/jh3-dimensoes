@@ -1,5 +1,5 @@
-const cacheName = 'jh3-orcamentos-v3';
-const core = ['./', './index.html', './style.css', './app.mjs', './calc.mjs',
+const cacheName = 'jh3-orcamentos-v4';
+const core = ['./', './index.html', './style.css', './app.mjs', './calc.mjs', './currency.mjs',
   './manifest.webmanifest', './logo.webp', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(cacheName).then(cache => cache.addAll(core)).then(() => self.skipWaiting()));
