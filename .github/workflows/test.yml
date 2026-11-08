@@ -8,7 +8,7 @@ permissions:
   contents: read
 jobs:
   testes:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Baixar código
         uses: actions/checkout@v4
