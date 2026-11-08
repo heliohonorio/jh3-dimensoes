@@ -23,3 +23,16 @@ jobs:
           node --check app.mjs
           node --check calc.mjs
           node --check sw.js
+      - name: Instalar navegador de teste
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Simular uso em celular e computador
+        run: node tests/browser.test.mjs
+      - name: Salvar capturas de verificação
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: capturas-do-sistema
+          path: screenshots/
+          if-no-files-found: ignore
