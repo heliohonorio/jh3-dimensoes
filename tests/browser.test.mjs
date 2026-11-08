@@ -121,6 +121,25 @@ try {
   await page.locator('#quote-form button[type=submit]').click();
   await page.waitForFunction(() => !document.querySelector('#result').hidden);
   assert.equal(await page.locator('input[name=markup]:checked').inputValue(), 'custom');
+  const smallCustom = parsePrice(await page.locator('#total').textContent());
+  assert.equal(await page.locator('#markup-custom').getAttribute('max'), null,
+    'sem limite fixo no campo personalizado');
+  await page.locator('#markup-custom').fill('1.000');
+  await page.locator('#quote-form button[type=submit]').click();
+  await page.waitForFunction(() => !document.querySelector('#result').hidden);
+  const price1000 = parsePrice(await page.locator('#total').textContent());
+  assert.ok(price1000 > smallCustom, '1.000% aumenta o valor de venda');
+  await page.locator('#markup-custom').fill('2.500,50');
+  await page.locator('#quote-form button[type=submit]').click();
+  await page.waitForFunction(() => !document.querySelector('#result').hidden);
+  const price2500 = parsePrice(await page.locator('#total').textContent());
+  assert.ok(price2500 > price1000, '2.500,50% também é aceito');
+  await page.reload({ waitUntil: 'networkidle' });
+  assert.equal(await page.locator('input[name="markup"][value="custom"]').isChecked(), true,
+    'opção de lucro é preservada no rascunho');
+  assert.equal(await page.locator('#markup-custom').inputValue(), '2.500,50',
+    'percentual de lucro salvo no aparelho');
+
   
   // Um link de página identifica o modelo, mas não inventa tempo ou peso.
   await page.locator('#project-import summary').click();
