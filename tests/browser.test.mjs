@@ -5,6 +5,30 @@ import { chromium } from 'playwright';
 
 const server = spawn('python3', ['-m', 'http.server', '8765', '--bind', '127.0.0.1'], { stdio: 'ignore' });
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+// Cria um 3MF fatiado mínimo de teste, sem acessar serviços externos.
+function zipOne(name, text) {
+  const nameBytes = Buffer.from(name);
+  const content = Buffer.from(text);
+  const local = Buffer.alloc(30);
+  local.writeUInt32LE(0x04034b50, 0);
+  local.writeUInt32LE(content.length, 18);
+  local.writeUInt32LE(content.length, 22);
+  local.writeUInt16LE(nameBytes.length, 26);
+  const central = Buffer.alloc(46);
+  central.writeUInt32LE(0x02014b50, 0);
+  central.writeUInt32LE(content.length, 20);
+  central.writeUInt32LE(content.length, 24);
+  central.writeUInt16LE(nameBytes.length, 28);
+  const localLength = local.length + nameBytes.length + content.length;
+  const end = Buffer.alloc(22);
+  end.writeUInt32LE(0x06054b50, 0);
+  end.writeUInt16LE(1, 8);
+  end.writeUInt16LE(1, 10);
+  end.writeUInt32LE(central.length + nameBytes.length, 12);
+  end.writeUInt32LE(localLength, 16);
+  return Buffer.concat([local, nameBytes, content, central, nameBytes, end]);
+}
 let browser;
 try {
   await pause(1200);
@@ -34,7 +58,6 @@ try {
   await page.locator('#tariff').fill('096');
   await page.locator('#watts').fill('84');
   await page.locator('#wear').fill('150');
-  await page.locator('#margin').fill('30');
   await page.locator('#settings-form button[type="submit"]').click();
 
   assert.equal(await page.locator('#quote-view').isVisible(), true, 'salvar custos retorna ao orçamento');
@@ -44,7 +67,7 @@ try {
   await page.locator('#quantity').fill('2');
   await page.locator('#hours').fill('2');
   await page.locator('#minutes').fill('0');
-  await page.locator('#quote-form details').first().locator('summary').click();
+  await page.locator('#quote-form details').filter({ hasText: 'Adicionar embalagem' }).locator('summary').click();
   await page.locator('#extras').fill('250');
   assert.equal(await page.locator('#extras').inputValue(), 'R$ 2,50');
   await page.locator('#quote-form button[type=submit]').click();
@@ -77,6 +100,57 @@ try {
   const parsePrice = text => Number(text.replace(/[^0-9,]/g, '').replace(',', '.'));
   assert.ok(parsePrice(price2) > parsePrice(price1), 'mudança da energia altera o preço');
 
+  
+  // Uma única opção selecionada e 100/150% tratados como acréscimo sobre custo.
+  await page.locator('label.profit-choice:has(input[value="100"])').click();
+  await page.locator('#quote-form button[type=submit]').click();
+  await page.waitForFunction(() => !document.querySelector('#result').hidden);
+  const price100 = parsePrice(await page.locator('#total').textContent());
+  await page.locator('label.profit-choice:has(input[value="150"])').click();
+  await page.locator('#quote-form button[type=submit]').click();
+  await page.waitForFunction(() => !document.querySelector('#result').hidden);
+  const price150 = parsePrice(await page.locator('#total').textContent());
+  assert.ok(price150 > price100, '150% custa mais que 100%');
+  await page.locator('label.profit-choice:has(input[value="custom"])').click();
+  assert.equal(await page.locator('#custom-markup').isVisible(), true);
+  await page.locator('#markup-custom').fill('85');
+  await page.locator('#quote-form button[type=submit]').click();
+  await page.waitForFunction(() => !document.querySelector('#result').hidden);
+  assert.equal(await page.locator('input[name=markup]:checked').inputValue(), 'custom');
+  
+  // Um link de página identifica o modelo, mas não inventa tempo ou peso.
+  await page.locator('#project-import summary').click();
+  await page.locator('#model-link').fill('https://makerworld.com/pt/models/123-suporte-para-celular');
+  await page.locator('#identify').click();
+  await page.waitForFunction(() => document.querySelector('#model-status').textContent.includes('não fornece peso'));
+  assert.equal(await page.locator('#piece').inputValue(), 'Suporte para celular');
+  assert.equal(await page.locator('#grams').inputValue(), '100');
+  
+  const sliceInfo = [
+    '<config><plate>',
+    '<metadata key="index" value="1"/>',
+    '<metadata key="prediction" value="3900"/>',
+    '<metadata key="weight" value="22.75"/>',
+    '<metadata key="printer_model_id" value="Bambu Lab A1 mini"/>',
+    '<filament id="1" type="PLA" used_g="22.75"/>',
+    '</plate></config>'
+  ].join('');
+  await page.locator('#project-file').setInputFiles({
+    name: 'Suporte_A1.gcode.3mf',
+    mimeType: 'application/octet-stream',
+    buffer: zipOne('Metadata/slice_info.config', sliceInfo)
+  });
+  await page.waitForFunction(() => document.querySelector('#model-status').textContent.includes('preenchidos'));
+  assert.equal(await page.locator('#grams').inputValue(), '22,75');
+  assert.equal(await page.locator('#hours').inputValue(), '1');
+  assert.equal(await page.locator('#minutes').inputValue(), '5');
+  assert.equal(await page.locator('#quantity').inputValue(), '2', 'quantidade não é inventada');
+  assert.match(await page.locator('#import-info').textContent(), /PLA/);
+  assert.equal(await page.locator('#piece').inputValue(), 'Suporte A1');
+  await page.locator('#quote-form button[type=submit]').click();
+  await page.waitForFunction(() => !document.querySelector('#result').hidden);
+  assert.match(await page.locator('#total').textContent(), /R\$/);
+
   await page.setViewportSize({ width: 320, height: 650 });
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true,
     'também cabe na tela pequena');
@@ -105,7 +179,7 @@ try {
   assert.equal(await oldPage.locator('#watts').inputValue(), '84', 'potência antiga atualizada');
   assert.equal(await oldPage.locator('#rollPrice').inputValue(), 'R$ 135,00', 'custo do rolo preservado');
   assert.equal(await oldPage.locator('#wear').inputValue(), 'R$ 3,50', 'desgaste preservado');
-  assert.equal(await oldPage.locator('#margin').inputValue(), '25', 'margem preservada');
+  assert.equal(await oldPage.locator('input[name="markup"][value="50"]').isChecked(), true, 'lucro inicial definido no orçamento');
   await oldPage.close();
   assert.deepEqual(errors, [], 'sem erros de script no navegador');
   console.log('Navegação, custos, rascunho, cálculo, imagem, histórico e responsividade: OK.');
