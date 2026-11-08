@@ -48,7 +48,7 @@
 
   <details class="expandable">
     <summary><span class="expand-icon">+</span> Adicionar embalagem ou acabamento <span class="muted">(opcional)</span></summary>
-    <div class="field"><label for="extras">Outros gastos <span class="unit">R$</span></label><input id="extras" inputmode="decimal" placeholder="Ex.: 3,00"><p class="helper">Embalagem, cola, argola, entrega...</p></div>
+    <div class="field"><label for="extras">Outros gastos <span class="unit">R$</span></label><input id="extras" data-currency inputmode="numeric" placeholder="R$ 0,00"><p class="helper">Embalagem, cola, argola, entrega...</p></div>
     <div class="field"><label for="laborMinutes">Tempo de acabamento <span class="unit">minutos</span></label><input id="laborMinutes" type="number" min="0" max="100000" step="1" placeholder="0"><p class="helper">Tempo gasto lixando, montando ou embalando. Não inclui o tempo da impressora.</p></div>
   </details>
   <details class="expandable">
@@ -96,23 +96,23 @@
  <div class="notice"><strong>Antes de começar</strong><p>Os números iniciais são exemplos. Coloque os valores reais que você paga. Eles não são enviados para nenhum servidor.</p></div>
  <form id="settings-form" class="panel" novalidate>
   <div class="section-title"><span class="number">1</span><div><h2>Filamento</h2><p>Quanto custa seu rolo de material?</p></div></div>
-  <div class="field"><label for="rollPrice">Preço pago pelo rolo <span class="unit">R$</span></label><input id="rollPrice" inputmode="decimal" required placeholder="Ex.: 90,00"></div>
+  <div class="field"><label for="rollPrice">Preço pago pelo rolo <span class="unit">R$</span></label><input id="rollPrice" data-currency inputmode="numeric" required placeholder="R$ 90,00"><p class="helper">Digite só os números. Ex.: 9000 vira R$ 90,00.</p></div>
   <div class="field"><label for="rollGrams">Peso do rolo <span class="unit">gramas</span></label><input id="rollGrams" inputmode="decimal" required placeholder="1000"></div>
   <hr>
   <div class="section-title"><span class="number">2</span><div><h2>Energia elétrica</h2><p>O valor da conta de luz e o consumo médio.</p></div></div>
-  <div class="field"><label for="tariff">Preço da energia <span class="unit">R$/kWh</span></label><input id="tariff" inputmode="decimal" required placeholder="Ex.: 1,00"></div>
-  <div class="field"><label for="watts">Consumo médio da impressora <span class="unit">W</span></label><input id="watts" inputmode="decimal" required placeholder="Ex.: 100"><p class="helper">Use o consumo médio medido ou estimado, não a potência máxima da fonte.</p></div>
+  <div class="field"><label for="tariff">Preço da energia <span class="unit">R$/kWh</span></label><input id="tariff" data-currency inputmode="numeric" required placeholder="R$ 0,96"><p class="helper">Referência: R$ 0,96 por kWh, calculada com os itens de energia da sua fatura. Parcelas, multas e iluminação pública não entram.</p></div>
+  <div class="field"><label for="watts">Consumo médio da impressora <span class="unit">W</span></label><input id="watts" inputmode="decimal" required placeholder="84"><p class="helper">A1 Mini com AMS Lite: 84 W estimados em PLA (80 W da impressora + cerca de 3,7 W do AMS). O consumo real varia conforme temperatura e material.</p></div>
   <hr>
   <div class="section-title"><span class="number">3</span><div><h2>Impressora e lucro</h2><p>Quanto reservar para a máquina e quanto ganhar.</p></div></div>
-  <div class="field"><label for="wear">Desgaste por hora <span class="unit">R$/h</span></label><input id="wear" inputmode="decimal" required placeholder="Ex.: 1,50"></div>
+  <div class="field"><label for="wear">Desgaste por hora <span class="unit">R$/h</span></label><input id="wear" data-currency inputmode="numeric" required placeholder="R$ 1,50"></div>
   <div class="field"><label for="margin">Margem de lucro desejada <span class="unit">%</span></label><input id="margin" inputmode="decimal" required placeholder="Ex.: 30"><p class="helper">30% significa que o lucro representa cerca de 30% do valor da venda, após os custos previstos.</p></div>
   <details class="expandable">
    <summary><span class="expand-icon">+</span> Opções avançadas <span class="muted">(opcional)</span></summary>
    <div class="field"><label for="waste">Perda extra de filamento <span class="unit">%</span></label><input id="waste" inputmode="decimal" placeholder="5"></div>
    <div class="field"><label for="failure">Reserva para falhas <span class="unit">%</span></label><input id="failure" inputmode="decimal" placeholder="5"></div>
    <div class="field"><label for="fee">Taxas da venda <span class="unit">%</span></label><input id="fee" inputmode="decimal" placeholder="0"><p class="helper">Taxas de cartão e plataformas.</p></div>
-   <div class="field"><label for="laborHourly">Preço da hora de acabamento <span class="unit">R$/h</span></label><input id="laborHourly" inputmode="decimal" placeholder="0"></div>
-   <div class="field"><label for="minPrice">Preço mínimo por pedido <span class="unit">R$</span></label><input id="minPrice" inputmode="decimal" placeholder="0"></div>
+   <div class="field"><label for="laborHourly">Preço da hora de acabamento <span class="unit">R$/h</span></label><input id="laborHourly" data-currency inputmode="numeric" placeholder="R$ 0,00"></div>
+   <div class="field"><label for="minPrice">Preço mínimo por pedido <span class="unit">R$</span></label><input id="minPrice" data-currency inputmode="numeric" placeholder="R$ 0,00"></div>
   </details>
   <p id="settings-error" class="error" role="alert"></p>
   <button class="button-primary main-action" type="submit">Salvar meus custos <span aria-hidden="true">✓</span></button>
