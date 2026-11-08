@@ -18,9 +18,13 @@ export const defaultSettings = Object.freeze({
 export function calculate(settings, job) {
   const { rollPrice, rollGrams, tariff, watts, wear, margin, waste,
     failure, fee, laborHourly, minPrice } = { ...defaultSettings, ...settings };
-  const { grams, hours, minutes, quantity, extras = 0, laborMinutes = 0 } = job;
+  const { grams, hours, minutes, quantity, extras = 0, laborMinutes = 0, markup } = job;
+  // A escolha de lucro no orçamento é acréscimo sobre o custo (markup).
+  // O cálculo anterior por margem permanece para orçamentos legados.
+  const usesMarkup = markup !== undefined;
   const values = [rollPrice, rollGrams, tariff, watts, wear, margin, waste,
     failure, fee, laborHourly, minPrice, grams, hours, minutes, quantity, extras, laborMinutes];
+  if (usesMarkup) values.push(markup);
 
   if (values.some(n => typeof n !== 'number' || !Number.isFinite(n) || n < 0) ||
       rollGrams <= 0 || grams <= 0 || !Number.isInteger(quantity) || quantity < 1 ||
@@ -28,7 +32,8 @@ export function calculate(settings, job) {
       !Number.isInteger(minutes) || minutes > 59 ||
       !Number.isInteger(laborMinutes) || laborMinutes > 100000 ||
       hours + minutes / 60 <= 0 || margin >= 100 || fee >= 100 ||
-      margin + fee >= 100 || waste > 1000 || failure > 1000) {
+      (!usesMarkup && margin + fee >= 100) || (usesMarkup && markup > 1000) ||
+      waste > 1000 || failure > 1000) {
     throw new Error('Confira peso, tempo, quantidade e custos. A soma da margem com as taxas deve ser menor que 100%.');
   }
 
@@ -39,7 +44,9 @@ export function calculate(settings, job) {
   const reserve = (filament + energy + machine) * failure / 100;
   const labor = laborMinutes / 60 * laborHourly;
   const cost = filament + energy + machine + reserve + labor + extras;
-  const rawPrice = cost / (1 - (margin + fee) / 100);
+  const rawPrice = usesMarkup
+    ? cost * (1 + markup / 100) / (1 - fee / 100)
+    : cost / (1 - (margin + fee) / 100);
   // Arredonda para cima, nunca para baixo da margem pretendida.
   const price = Math.max(Math.ceil((rawPrice - 1e-9) * 100) / 100, minPrice);
   if (!Number.isFinite(price) || price > 1e12) throw new Error('Os valores informados são muito altos.');
