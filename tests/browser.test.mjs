@@ -1,33 +1,37 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { mkdir } from 'node:fs/promises';
+import { deflateRawSync } from 'node:zlib';
 import { chromium } from 'playwright';
 
 const server = spawn('python3', ['-m', 'http.server', '8765', '--bind', '127.0.0.1'], { stdio: 'ignore' });
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 // Cria um 3MF fatiado mínimo de teste, sem acessar serviços externos.
-function zipOne(name, text) {
+function zipOne(name, text, compressed = false) {
   const nameBytes = Buffer.from(name);
   const content = Buffer.from(text);
+  const packed = compressed ? deflateRawSync(content) : content;
   const local = Buffer.alloc(30);
   local.writeUInt32LE(0x04034b50, 0);
-  local.writeUInt32LE(content.length, 18);
+  if (compressed) local.writeUInt16LE(8, 8);
+  local.writeUInt32LE(packed.length, 18);
   local.writeUInt32LE(content.length, 22);
   local.writeUInt16LE(nameBytes.length, 26);
   const central = Buffer.alloc(46);
   central.writeUInt32LE(0x02014b50, 0);
-  central.writeUInt32LE(content.length, 20);
+  if (compressed) central.writeUInt16LE(8, 10);
+  central.writeUInt32LE(packed.length, 20);
   central.writeUInt32LE(content.length, 24);
   central.writeUInt16LE(nameBytes.length, 28);
-  const localLength = local.length + nameBytes.length + content.length;
+  const localLength = local.length + nameBytes.length + packed.length;
   const end = Buffer.alloc(22);
   end.writeUInt32LE(0x06054b50, 0);
   end.writeUInt16LE(1, 8);
   end.writeUInt16LE(1, 10);
   end.writeUInt32LE(central.length + nameBytes.length, 12);
   end.writeUInt32LE(localLength, 16);
-  return Buffer.concat([local, nameBytes, content, central, nameBytes, end]);
+  return Buffer.concat([local, nameBytes, packed, central, nameBytes, end]);
 }
 let browser;
 try {
@@ -138,7 +142,7 @@ try {
   await page.locator('#project-file').setInputFiles({
     name: 'Suporte_A1.gcode.3mf',
     mimeType: 'application/octet-stream',
-    buffer: zipOne('Metadata/slice_info.config', sliceInfo)
+    buffer: zipOne('Metadata/slice_info.config', sliceInfo, true)
   });
   await page.waitForFunction(() => document.querySelector('#model-status').textContent.includes('preenchidos'));
   assert.equal(await page.locator('#grams').inputValue(), '22,75');
@@ -150,6 +154,32 @@ try {
   await page.locator('#quote-form button[type=submit]').click();
   await page.waitForFunction(() => !document.querySelector('#result').hidden);
   assert.match(await page.locator('#total').textContent(), /R\$/);
+
+
+  // Aceita G-code e rejeita um fatiamento para outra impressora.
+  const gcode = [
+    '; model printing time: 20m; total estimated time: 2h 10m 5s',
+    '; total filament weight [g] : 30.25',
+    '; printer_model = Bambu Lab A1 mini'
+  ].join('\n');
+  await page.locator('#project-file').setInputFiles({
+    name: 'Caixa_A1.gcode',
+    mimeType: 'text/plain',
+    buffer: Buffer.from(gcode)
+  });
+  await page.waitForFunction(() => document.querySelector('#import-info').textContent.includes('G-code fatiado'));
+  assert.equal(await page.locator('#grams').inputValue(), '30,25');
+  assert.equal(await page.locator('#hours').inputValue(), '2');
+  assert.equal(await page.locator('#minutes').inputValue(), '11');
+
+  const otherPrinter = sliceInfo.replace('Bambu Lab A1 mini', 'Bambu Lab P1S');
+  await page.locator('#project-file').setInputFiles({
+    name: 'Perfil_P1S.gcode.3mf',
+    mimeType: 'application/octet-stream',
+    buffer: zipOne('Metadata/slice_info.config', otherPrinter, true)
+  });
+  await page.waitForFunction(() => document.querySelector('#model-status').textContent.includes('não para a A1 Mini'));
+  assert.equal(await page.locator('#grams').inputValue(), '30,25', 'não substitui valores com arquivo de outra máquina');
 
   await page.setViewportSize({ width: 320, height: 650 });
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true,
