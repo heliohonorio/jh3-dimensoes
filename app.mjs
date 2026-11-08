@@ -1,11 +1,12 @@
 import { calculate, decimal, defaultSettings, makerWorldModel } from './calc.mjs';
 import { formatCurrency, installCurrencyMasks } from './currency.mjs';
+import { inspectProjectFile, fetchSlicedFile } from './project-import.mjs';
 
 const $ = id => document.getElementById(id);
 const formatMoney = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 const formatDate = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' });
-const keys = Object.keys(defaultSettings);
-const draftIds = ['piece', 'grams', 'quantity', 'hours', 'minutes', 'extras', 'laborMinutes', 'model-link'];
+const keys = Object.keys(defaultSettings).filter(key => key !== 'margin');
+const draftIds = ['piece', 'grams', 'quantity', 'hours', 'minutes', 'extras', 'laborMinutes', 'model-link', 'markup-custom'];
 const settingsKey = 'jh3-preferences-v2';
 const oldSettingsKey = 'jh3-preferences-v1';
 const draftKey = 'jh3-draft-v2';
@@ -41,7 +42,7 @@ function validSettings(candidate) {
     }
   }
   try {
-    calculate(values, { grams: 1, quantity: 1, hours: 1, minutes: 0 });
+    calculate(values, { grams: 1, quantity: 1, hours: 1, minutes: 0, markup: 50 });
     return values;
   } catch { return null; }
 }
@@ -126,8 +127,22 @@ function invalidateQuote() {
   for (const key of ['share', 'copy', 'download']) $(key).disabled = true;
   $('share-status').textContent = '';
 }
+function chosenMarkup() {
+  const radio = document.querySelector('input[name="markup"]:checked');
+  return radio?.value ?? '50';
+}
+function updateCustomMarkup() {
+  $('custom-markup').hidden = chosenMarkup() !== 'custom';
+}
+function setChosenMarkup(mode, custom) {
+  const value = ['25', '50', '75', '100', '150', 'custom'].includes(String(mode)) ? String(mode) : '50';
+  const radio = document.querySelector('input[name="markup"][value="' + value + '"]');
+  if (radio) radio.checked = true;
+  if (custom !== undefined && custom !== null) $('markup-custom').value = String(custom);
+  updateCustomMarkup();
+}
 function getDraft() {
-  return Object.fromEntries(draftIds.map(key => [key, $(key).value]));
+  return { ...Object.fromEntries(draftIds.map(key => [key, $(key).value])), markup: chosenMarkup() };
 }
 function saveDraft() { storeSet(draftKey, getDraft()); }
 function restoreDraft() {
@@ -140,9 +155,24 @@ function restoreDraft() {
           : draft[key];
       }
     }
+    setChosenMarkup(draft.markup, draft['markup-custom']);
+  } else {
+    setChosenMarkup('50');
   }
 }
 restoreDraft();
+document.querySelectorAll('input[name="markup"]').forEach(radio => {
+  radio.addEventListener('change', () => {
+    updateCustomMarkup();
+    if (current) invalidateQuote();
+    saveDraft();
+    if (chosenMarkup() === 'custom') $('markup-custom').focus();
+  });
+});
+$('markup-custom').addEventListener('input', () => {
+  if (current) invalidateQuote();
+  saveDraft();
+});
 
 function getJob() {
   return {
@@ -151,7 +181,8 @@ function getJob() {
     hours: decimal($('hours').value),
     minutes: decimal($('minutes').value),
     extras: decimal($('extras').value.trim() || '0'),
-    laborMinutes: decimal($('laborMinutes').value.trim() || '0')
+    laborMinutes: decimal($('laborMinutes').value.trim() || '0'),
+    markup: chosenMarkup() === 'custom' ? decimal($('markup-custom').value) : Number(chosenMarkup())
   };
 }
 $('quote-form').addEventListener('input', event => {
@@ -164,18 +195,94 @@ $('quote-form').addEventListener('input', event => {
   }
 });
 
-$('identify').addEventListener('click', () => {
+function applyImportedProject(data) {
+  const printer = data.printer ?? '';
+  if (printer && !/\ba1\s*mini\b/i.test(printer)) {
+    throw new Error('Este arquivo foi fatiado para "' + printer +
+      '", e não para a A1 Mini. Selecione A1 Mini no Bambu Studio, fatie novamente e importe o arquivo correto.');
+  }
+  const grams = Number(data.grams);
+  const duration = Math.ceil(Number(data.seconds) / 60);
+  if (!Number.isFinite(grams) || grams <= 0 || grams > 1000000 ||
+      !Number.isFinite(duration) || duration < 1) {
+    throw new Error('Este arquivo não contém peso e tempo de impressão válidos.');
+  }
+  $('piece').value = (data.name || 'Peça impressa em 3D').slice(0, 90);
+  $('grams').value = String(Math.round(grams * 100) / 100).replace('.', ',');
+  $('hours').value = String(Math.floor(duration / 60));
+  $('minutes').value = String(duration % 60);
+  // A quantidade não pode ser inferida com segurança do cabeçalho fatiado.
+  $('import-info').textContent = [
+    '✓ Importado de ' + data.source,
+    'Filamento: ' + grams.toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + ' g',
+    'Tempo: ' + Math.floor(duration / 60) + ' h ' + duration % 60 + ' min',
+    data.material ? 'Material: ' + data.material : '',
+    printer ? 'Impressora: ' + printer : 'Impressora não informada: confirme o perfil A1 Mini.',
+    data.plates > 1 ? 'Placas: ' + data.plates + ' (tempo e material somados)' : '',
+    'Confira a quantidade de peças antes de calcular.'
+  ].filter(Boolean).join('\n');
+  $('import-info').hidden = false;
+  $('model-status').textContent = 'Dados de fatiamento preenchidos. Confira as informações antes de calcular.';
+  if (current) invalidateQuote();
+  saveDraft();
+}
+
+$('project-file').addEventListener('change', async () => {
+  const file = $('project-file').files?.[0];
+  if (!file) return;
+  $('model-status').textContent = 'Lendo o arquivo selecionado...';
+  $('import-info').hidden = true;
   try {
-    const model = makerWorldModel($('model-link').value);
-    $('piece').value = model.title.slice(0, 90);
-    $('model-page').href = model.url;
+    const result = await inspectProjectFile(file);
+    applyImportedProject(result);
+  } catch (error) {
+    $('model-status').textContent = error.message || 'Não foi possível ler o arquivo.';
+  }
+});
+
+$('identify').addEventListener('click', async () => {
+  const button = $('identify');
+  const url = $('model-link').value.trim();
+  $('import-info').hidden = true;
+  $('model-page').hidden = true;
+  if (!url) {
+    $('model-status').textContent = 'Cole o endereço do projeto ou escolha o arquivo fatiado.';
+    return;
+  }
+  button.disabled = true;
+  $('model-status').textContent = 'Verificando o endereço...';
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'https:' || parsed.username || parsed.password) throw new Error('Informe um link HTTPS público.');
+    const fileData = await fetchSlicedFile(url);
+    if (fileData) {
+      applyImportedProject(fileData);
+      $('model-page').href = parsed.href;
+      $('model-page').hidden = false;
+      return;
+    }
+    let name = '';
+    try {
+      name = makerWorldModel(url).title;
+    } catch {
+      // Modelos externos podem não trazer informações de fatiamento.
+      const last = parsed.pathname.split('/').filter(Boolean).pop() || '';
+      const readable = decodeURIComponent(last).replace(/\.(stl|3mf)$/i, '')
+        .replace(/[-_]+/g, ' ').trim();
+      if (readable.length > 4 && /[a-zA-ZÀ-ÿ]/.test(readable)) name = readable;
+    }
+    if (name) $('piece').value = name.slice(0, 90);
+    $('model-page').href = parsed.href;
     $('model-page').hidden = false;
-    $('model-status').textContent = 'Nome da peça preenchido.';
+    $('model-status').textContent =
+      'Projeto identificado pelo link. Essa página não fornece peso e tempo para a A1 Mini. ' +
+      'Baixe o projeto, fatie no Bambu Studio e escolha o arquivo .gcode.3mf aqui para preencher automaticamente.';
     if (current) invalidateQuote();
     saveDraft();
-  } catch {
-    $('model-page').hidden = true;
-    $('model-status').textContent = 'Cole o endereço completo de um modelo do MakerWorld.';
+  } catch (error) {
+    $('model-status').textContent = error.message || 'Não foi possível importar esse endereço.';
+  } finally {
+    button.disabled = false;
   }
 });
 
@@ -205,12 +312,13 @@ function saveHistory(result, job) {
     name: result.name, price: result.price, quantity: job.quantity,
     grams: job.grams, hours: job.hours, minutes: job.minutes,
     extras: job.extras, laborMinutes: job.laborMinutes,
+    markup: job.markup,
     date: new Date().toISOString()
   };
   const isSame = x => x.name === item.name && x.grams === item.grams &&
     x.quantity === item.quantity && x.hours === item.hours &&
     x.minutes === item.minutes && x.extras === item.extras &&
-    x.laborMinutes === item.laborMinutes;
+    x.laborMinutes === item.laborMinutes && x.markup === item.markup;
   history = [item, ...history.filter(x => !isSame(x))].slice(0, 8);
   storeSet(historyKey, history);
   renderHistory();
@@ -241,6 +349,10 @@ function renderHistory() {
         $(key).value = $(key).matches('[data-currency]')
           ? formatCurrency(value)
           : String(value).replace('.', ',');
+      }
+      if (Number.isFinite(item.markup)) {
+        const known = [25, 50, 75, 100, 150].includes(item.markup);
+        setChosenMarkup(known ? item.markup : 'custom', known ? undefined : item.markup);
       }
       saveDraft();
       switchView('quote');
@@ -285,6 +397,11 @@ $('quote-form').addEventListener('submit', event => {
     $('hours').setAttribute('aria-invalid', 'true');
     $('quote-error').textContent = 'Informe a duração total da impressão.';
     $('hours').focus();
+    return;
+  }
+  if (chosenMarkup() === 'custom' && (!Number.isFinite(job.markup) || job.markup < 0 || job.markup > 1000)) {
+    $('quote-error').textContent = 'Informe a porcentagem personalizada entre 0% e 1000%.';
+    $('markup-custom').focus();
     return;
   }
   let result;
@@ -336,6 +453,10 @@ $('clear').addEventListener('click', () => {
   $('extras').value = '';
   $('laborMinutes').value = '';
   $('model-link').value = '';
+  $('project-file').value = '';
+  $('import-info').hidden = true;
+  $('import-info').textContent = '';
+  setChosenMarkup('50', '');
   $('model-page').hidden = true;
   $('model-status').textContent = '';
   storeRemove(draftKey);
