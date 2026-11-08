@@ -107,3 +107,37 @@ footer{text-align:center;padding:36px 3px 0;color:#94abba;font-size:.8rem}
 }
 @media(min-width:700px){.panel{padding:30px}.time-row{max-width:340px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+
+/* Lucro do pedido: uma escolha por vez, visual de caixa marcada. */
+.profit-fieldset{min-width:0;border:1px solid #3a5669;border-radius:14px;margin:22px 0 18px;padding:16px 13px}
+.profit-fieldset legend{padding:0 7px;font-size:1rem;font-weight:800;color:#ecf9ff}
+.profit-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:4px}
+.profit-choice{position:relative;display:flex;align-items:center;justify-content:center;gap:7px;min-height:54px;border:1px solid #466074;border-radius:11px;padding:9px 6px;background:#102131;color:#d7e9f3;font-size:.92rem;font-weight:750;text-align:center;cursor:pointer}
+.profit-choice:has(input:checked){background:#1c4959;border-color:#67d9ee;color:#fff}
+.profit-choice:focus-within{outline:2px solid var(--cyan);outline-offset:2px}
+.profit-choice input[type=radio]{position:absolute;opacity:0;width:1px;height:1px;min-height:0;margin:0;padding:0;pointer-events:none}
+.profit-box-tick{display:grid;place-items:center;flex:none;width:17px;height:17px;border:2px solid #83a6b6;border-radius:4px}
+.profit-choice:has(input:checked) .profit-box-tick{background:#67d9ee;border-color:#67d9ee;color:#08141c}
+.profit-choice:has(input:checked) .profit-box-tick::after{content:"✓";font-size:.78rem;line-height:1;font-weight:900}
+.custom-markup{margin-top:13px}
+.custom-markup label{display:block;font-size:.87rem;font-weight:700;margin:0 0 8px}
+.custom-markup input{max-width:235px}
+.project-import{margin:18px 0;border-top:1px solid #33495a;border-bottom:1px solid #33495a;padding-bottom:16px}
+.project-import summary{min-height:54px}
+.project-import .field{margin-top:16px;margin-bottom:12px}
+.project-import .field label{font-size:.88rem}
+.project-import .button-outline{width:100%;margin:0 0 10px}
+.import-separator{text-align:center;margin:10px 0 12px;font-weight:800;letter-spacing:.04em;font-size:.72rem}
+.file-button{display:flex;justify-content:center;align-items:center;min-height:54px;background:#1b3848;border:1px dashed #6ab1c8;color:#e4f8ff;padding:10px 12px;text-align:center;border-radius:12px;font-weight:750;font-size:.89rem;cursor:pointer}
+.file-button:hover{background:#224757}
+.file-input{position:absolute;opacity:0;pointer-events:none;height:1px;min-height:0;width:1px;padding:0;border:0}
+.file-button:has(+ .file-input:focus-visible){outline:2px solid var(--cyan);outline-offset:3px}
+.import-status{font-size:.83rem;line-height:1.5;color:#a4f0fb;margin:13px 0 5px;white-space:pre-line}
+.import-status:empty{display:none}
+.import-info{border:1px solid #347285;background:#102c3b;border-radius:10px;padding:12px 14px;margin-top:10px;font-size:.84rem;line-height:1.6;color:#e4f6fc;white-space:pre-line}
+@media(max-width:460px){
+.profit-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.profit-choice{min-height:53px;font-size:.87rem}
+.profit-fieldset{padding:14px 11px}
+}
