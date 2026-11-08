@@ -36,6 +36,19 @@
 
  <form id="quote-form" class="panel" novalidate>
   <div class="section-title"><span class="number">1</span><div><h2>Dados da impressão</h2><p>Veja essas informações no Bambu Studio.</p></div></div>
+  <details class="expandable project-import" id="project-import">
+    <summary><span class="expand-icon">+</span> Importar projeto (MakerWorld, 3MF ou G-code)</summary>
+    <p class="helper">Cole um link ou escolha um arquivo fatiado. A calculadora só preenche peso e tempo quando esses dados estiverem disponíveis.</p>
+    <div class="field"><label for="model-link">Link do projeto</label><input id="model-link" type="url" autocomplete="off" inputmode="url" placeholder="https://makerworld.com/..."></div>
+    <button type="button" id="identify" class="button-outline">Ler link do projeto</button>
+    <p class="helper import-separator">OU IMPORTE O ARQUIVO JÁ FATIADO</p>
+    <label for="project-file" class="file-button">Escolher arquivo .gcode.3mf ou .gcode</label>
+    <input id="project-file" class="file-input" type="file" accept=".gcode.3mf,.3mf,.gcode,.gco,.stl,.obj">
+    <p class="helper">No Bambu Studio: abra o modelo, escolha A1 Mini, fatie e use <strong>Export plate sliced file</strong>. Um STL ou 3MF sem fatiamento não contém tempo de impressão confiável.</p>
+    <p id="model-status" class="import-status" role="status" aria-live="polite"></p>
+    <a id="model-page" hidden rel="noopener noreferrer" target="_blank">Abrir página do projeto</a>
+    <div id="import-info" class="import-info" hidden></div>
+  </details>
   <div class="field"><label for="piece">O que você vai imprimir? <span class="optional-label">opcional</span></label><input id="piece" maxlength="90" autocomplete="off" placeholder="Ex.: Chaveiro com nome"></div>
   <div class="field"><label for="grams">Quanto de filamento? <span class="unit">gramas</span></label><input id="grams" inputmode="decimal" autocomplete="off" placeholder="Ex.: 45,5" required><p class="helper">Coloque o peso total indicado no Bambu Studio.</p></div>
   <div class="field"><label for="quantity">Quantas peças no total?</label><input id="quantity" type="number" inputmode="numeric" min="1" max="100000" step="1" value="1" required></div>
@@ -67,19 +80,7 @@
     </div>
     <p class="helper" id="profit-help">O percentual aumenta o custo de produção. Ex.: custo R$ 10,00 + 100% = R$ 20,00, antes de taxas.</p>
   </fieldset>
-  <details class="expandable project-import" id="project-import">
-    <summary><span class="expand-icon">+</span> Importar projeto (MakerWorld, 3MF ou G-code)</summary>
-    <p class="helper">Cole um link ou escolha um arquivo fatiado. A calculadora só preenche peso e tempo quando esses dados estiverem disponíveis.</p>
-    <div class="field"><label for="model-link">Link do projeto</label><input id="model-link" type="url" autocomplete="off" inputmode="url" placeholder="https://makerworld.com/..."></div>
-    <button type="button" id="identify" class="button-outline">Ler link do projeto</button>
-    <p class="helper import-separator">OU IMPORTE O ARQUIVO JÁ FATIADO</p>
-    <label for="project-file" class="file-button">Escolher arquivo .gcode.3mf ou .gcode</label>
-    <input id="project-file" class="file-input" type="file" accept=".gcode.3mf,.3mf,.gcode,.gco,.stl,.obj">
-    <p class="helper">No Bambu Studio: abra o modelo, escolha A1 Mini, fatie e use <strong>Export plate sliced file</strong>. Um STL ou 3MF sem fatiamento não contém tempo de impressão confiável.</p>
-    <p id="model-status" class="import-status" role="status" aria-live="polite"></p>
-    <a id="model-page" hidden rel="noopener noreferrer" target="_blank">Abrir página do projeto</a>
-    <div id="import-info" class="import-info" hidden></div>
-  </details>
+
   <p id="quote-error" class="error" role="alert"></p>
   <button class="button-primary main-action" type="submit">Calcular preço <span aria-hidden="true">→</span></button>
   <button id="clear" class="clear-button" type="button">Limpar para novo orçamento</button>
