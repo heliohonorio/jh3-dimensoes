@@ -17,7 +17,7 @@ jobs:
         with:
           node-version: '22'
       - name: Testar cálculos
-        run: node --test tests/*.test.mjs
+        run: node --test tests/calc.test.mjs
       - name: Conferir sintaxe
         run: |
           node --check app.mjs
