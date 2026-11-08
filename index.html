@@ -28,7 +28,7 @@
 </nav>
 
 <section id="quote-view">
- <div class="intro"><p class="eyebrow">NOVA VENDA</p><h1>Quanto cobrar?</h1><p>Informe os dados da impressão. O resto a gente calcula.</p></div>
+ <div class="intro"><p class="eyebrow">NOVA VENDA</p><h1>Quanto cobrar?</h1><p>Informe os dados da impressão ou importe um arquivo fatiado. O resto a gente calcula.</p></div>
  <div id="first-setup" class="notice setup-notice" hidden>
   <div><strong>Primeiro acesso?</strong><p>Confira e salve os custos da sua impressora antes do primeiro orçamento.</p></div>
   <button id="setup-now" type="button" class="button-outline">Configurar custos <span aria-hidden="true">→</span></button>
@@ -51,13 +51,34 @@
     <div class="field"><label for="extras">Outros gastos <span class="unit">R$</span></label><input id="extras" data-currency inputmode="numeric" placeholder="R$ 0,00"><p class="helper">Embalagem, cola, argola, entrega...</p></div>
     <div class="field"><label for="laborMinutes">Tempo de acabamento <span class="unit">minutos</span></label><input id="laborMinutes" type="number" min="0" max="100000" step="1" placeholder="0"><p class="helper">Tempo gasto lixando, montando ou embalando. Não inclui o tempo da impressora.</p></div>
   </details>
-  <details class="expandable">
-    <summary><span class="expand-icon">+</span> Usar nome de um link MakerWorld</summary>
-    <div class="field"><label for="model-link">Link do modelo</label><input id="model-link" type="url" autocomplete="off" placeholder="https://makerworld.com/..."></div>
-    <button type="button" id="identify" class="button-outline">Preencher nome da peça</button>
-    <p id="model-status" class="helper" role="status"></p>
-    <a id="model-page" hidden rel="noopener noreferrer" target="_blank">Abrir o modelo</a>
-    <p class="helper">O peso e o tempo ainda devem ser informados manualmente.</p>
+  <fieldset class="profit-fieldset" aria-describedby="profit-help">
+    <legend>Quanto deseja ganhar neste pedido?</legend>
+    <div class="profit-grid" role="radiogroup" aria-label="Acréscimo de lucro sobre o custo">
+      <label class="profit-choice"><input type="radio" name="markup" value="25"><span class="profit-box-tick" aria-hidden="true"></span>25%</label>
+      <label class="profit-choice"><input type="radio" name="markup" value="50" checked><span class="profit-box-tick" aria-hidden="true"></span>50%</label>
+      <label class="profit-choice"><input type="radio" name="markup" value="75"><span class="profit-box-tick" aria-hidden="true"></span>75%</label>
+      <label class="profit-choice"><input type="radio" name="markup" value="100"><span class="profit-box-tick" aria-hidden="true"></span>100%</label>
+      <label class="profit-choice"><input type="radio" name="markup" value="150"><span class="profit-box-tick" aria-hidden="true"></span>150%</label>
+      <label class="profit-choice"><input type="radio" name="markup" value="custom"><span class="profit-box-tick" aria-hidden="true"></span>Personalizado</label>
+    </div>
+    <div id="custom-markup" class="custom-markup" hidden>
+      <label for="markup-custom">Porcentagem personalizada (%)</label>
+      <input id="markup-custom" type="number" inputmode="decimal" min="0" max="1000" step="0.01" placeholder="Ex.: 85">
+    </div>
+    <p class="helper" id="profit-help">O percentual aumenta o custo de produção. Ex.: custo R$ 10,00 + 100% = R$ 20,00, antes de taxas.</p>
+  </fieldset>
+  <details class="expandable project-import" id="project-import">
+    <summary><span class="expand-icon">+</span> Importar projeto (MakerWorld, 3MF ou G-code)</summary>
+    <p class="helper">Cole um link ou escolha um arquivo fatiado. A calculadora só preenche peso e tempo quando esses dados estiverem disponíveis.</p>
+    <div class="field"><label for="model-link">Link do projeto</label><input id="model-link" type="url" autocomplete="off" inputmode="url" placeholder="https://makerworld.com/..."></div>
+    <button type="button" id="identify" class="button-outline">Ler link do projeto</button>
+    <p class="helper import-separator">OU IMPORTE O ARQUIVO JÁ FATIADO</p>
+    <label for="project-file" class="file-button">Escolher arquivo .gcode.3mf ou .gcode</label>
+    <input id="project-file" class="file-input" type="file" accept=".gcode.3mf,.3mf,.gcode,.gco,.stl,.obj">
+    <p class="helper">No Bambu Studio: abra o modelo, escolha A1 Mini, fatie e use <strong>Export plate sliced file</strong>. Um STL ou 3MF sem fatiamento não contém tempo de impressão confiável.</p>
+    <p id="model-status" class="import-status" role="status" aria-live="polite"></p>
+    <a id="model-page" hidden rel="noopener noreferrer" target="_blank">Abrir página do projeto</a>
+    <div id="import-info" class="import-info" hidden></div>
   </details>
   <p id="quote-error" class="error" role="alert"></p>
   <button class="button-primary main-action" type="submit">Calcular preço <span aria-hidden="true">→</span></button>
@@ -103,9 +124,8 @@
   <div class="field"><label for="tariff">Preço da energia <span class="unit">R$/kWh</span></label><input id="tariff" data-currency inputmode="numeric" required placeholder="R$ 0,96"><p class="helper">Referência: R$ 0,96 por kWh, calculada com os itens de energia da sua fatura. Parcelas, multas e iluminação pública não entram.</p></div>
   <div class="field"><label for="watts">Consumo médio da impressora <span class="unit">W</span></label><input id="watts" inputmode="decimal" required placeholder="84"><p class="helper">A1 Mini com AMS Lite: 84 W estimados em PLA (80 W da impressora + cerca de 3,7 W do AMS). O consumo real varia conforme temperatura e material.</p></div>
   <hr>
-  <div class="section-title"><span class="number">3</span><div><h2>Impressora e lucro</h2><p>Quanto reservar para a máquina e quanto ganhar.</p></div></div>
+  <div class="section-title"><span class="number">3</span><div><h2>Desgaste da impressora</h2><p>Os percentuais de lucro agora ficam em cada orçamento.</p></div></div>
   <div class="field"><label for="wear">Desgaste por hora <span class="unit">R$/h</span></label><input id="wear" data-currency inputmode="numeric" required placeholder="R$ 1,50"></div>
-  <div class="field"><label for="margin">Margem de lucro desejada <span class="unit">%</span></label><input id="margin" inputmode="decimal" required placeholder="Ex.: 30"><p class="helper">30% significa que o lucro representa cerca de 30% do valor da venda, após os custos previstos.</p></div>
   <details class="expandable">
    <summary><span class="expand-icon">+</span> Opções avançadas <span class="muted">(opcional)</span></summary>
    <div class="field"><label for="waste">Perda extra de filamento <span class="unit">%</span></label><input id="waste" inputmode="decimal" placeholder="5"></div>
