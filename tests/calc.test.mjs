@@ -56,3 +56,27 @@ test('usa tarifa real de referência e consumo médio da A1 Mini + AMS Lite', ()
     { grams: 1, hours: 10, minutes: 0, quantity: 1 });
   assert.ok(Math.abs(print.energy - 0.8064) < 1e-8);
 });
+
+
+test('lucro de 100% e 150% é acréscimo sobre o custo, não margem de venda', () => {
+  const settings = {
+    ...defaultSettings, rollPrice: 100, rollGrams: 1000,
+    tariff: 0, watts: 0, wear: 0, waste: 0, failure: 0, fee: 0
+  };
+  const job = { grams: 100, quantity: 1, hours: 1, minutes: 0, extras: 0, laborMinutes: 0 };
+  const double = calculate(settings, { ...job, markup: 100 });
+  const twoAndHalf = calculate(settings, { ...job, markup: 150 });
+  assert.equal(double.cost, 10);
+  assert.equal(double.price, 20);
+  assert.equal(double.profit, 10);
+  assert.equal(twoAndHalf.price, 25);
+  assert.equal(twoAndHalf.profit, 15);
+});
+test('markup personalizado preserva lucro planejado após taxas', () => {
+  const settings = { ...defaultSettings, rollPrice: 100, rollGrams: 1000,
+    tariff: 0, watts: 0, wear: 0, failure: 0, waste: 0, fee: 10 };
+  const result = calculate(settings, { grams: 100, quantity: 1, hours: 1, minutes: 0, markup: 75 });
+  assert.equal(result.price, 19.45);
+  assert.ok(result.profit >= 7.5);
+  assert.throws(() => calculate(settings, { grams: 100, quantity: 1, hours: 1, minutes: 0, markup: 1001 }));
+});
