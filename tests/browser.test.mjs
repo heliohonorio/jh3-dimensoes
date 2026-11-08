@@ -20,11 +20,20 @@ try {
   await page.locator('#setup-now').click();
   assert.equal(await page.locator('#settings-view').isVisible(), true, 'custos abrem em tela normal');
   assert.equal(await page.locator('#quote-view').isVisible(), false);
-  await page.locator('#rollPrice').fill('100');
+  assert.equal(await page.locator('#tariff').inputValue(), 'R$ 0,96');
+  assert.equal(await page.locator('#watts').inputValue(), '84');
+  // Simula a digitação normal no teclado do celular.
+  await page.locator('#rollPrice').fill('');
+  await page.locator('#rollPrice').pressSequentially('1234');
+  assert.equal(await page.locator('#rollPrice').inputValue(), 'R$ 12,34');
+  await page.locator('#rollPrice').press('Backspace');
+  assert.equal(await page.locator('#rollPrice').inputValue(), 'R$ 1,23');
+  await page.locator('#rollPrice').fill('10000');
+  assert.equal(await page.locator('#rollPrice').inputValue(), 'R$ 100,00');
   await page.locator('#rollGrams').fill('1000');
-  await page.locator('#tariff').fill('1');
-  await page.locator('#watts').fill('100');
-  await page.locator('#wear').fill('1,5');
+  await page.locator('#tariff').fill('096');
+  await page.locator('#watts').fill('84');
+  await page.locator('#wear').fill('150');
   await page.locator('#margin').fill('30');
   await page.locator('#settings-form button[type="submit"]').click();
 
@@ -35,6 +44,9 @@ try {
   await page.locator('#quantity').fill('2');
   await page.locator('#hours').fill('2');
   await page.locator('#minutes').fill('0');
+  await page.locator('#quote-form details').first().locator('summary').click();
+  await page.locator('#extras').fill('250');
+  assert.equal(await page.locator('#extras').inputValue(), 'R$ 2,50');
   await page.locator('#quote-form button[type=submit]').click();
   await page.waitForFunction(() => !document.querySelector('#result').hidden);
   const price1 = await page.locator('#total').textContent();
@@ -52,10 +64,12 @@ try {
   await page.locator('#history-list button').first().click();
   await page.waitForFunction(() => !document.querySelector('#result').hidden);
   assert.equal(await page.locator('#piece').inputValue(), 'Chaveiro JH3');
+  assert.equal(await page.locator('#extras').inputValue(), 'R$ 2,50');
 
   await page.locator('#tab-settings').click();
   assert.equal(await page.locator('#settings-view').isVisible(), true);
-  await page.locator('#tariff').fill('2');
+  await page.locator('#tariff').fill('200');
+  assert.equal(await page.locator('#tariff').inputValue(), 'R$ 2,00');
   await page.locator('#settings-form button[type=submit]').click();
   await page.locator('#quote-form button[type=submit]').click();
   await page.waitForFunction(() => !document.querySelector('#result').hidden);
@@ -77,6 +91,22 @@ try {
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true,
     'cabe também na versão computador');
   await page.screenshot({ path: 'screenshots/computador.png', fullPage: true });
+  // Aparelhos que já tinham custos salvos recebem SOMENTE a atualização da energia.
+  const oldPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await oldPage.addInitScript(() => {
+    localStorage.setItem('jh3-preferences-v2', JSON.stringify({
+      rollPrice: 135, rollGrams: 750, tariff: 1.75, watts: 180,
+      wear: 3.5, margin: 25, waste: 5, failure: 5, fee: 0, laborHourly: 0, minPrice: 0
+    }));
+  });
+  await oldPage.goto('http://127.0.0.1:8765/', { waitUntil: 'networkidle' });
+  await oldPage.locator('#tab-settings').click();
+  assert.equal(await oldPage.locator('#tariff').inputValue(), 'R$ 0,96', 'tarifa antiga atualizada');
+  assert.equal(await oldPage.locator('#watts').inputValue(), '84', 'potência antiga atualizada');
+  assert.equal(await oldPage.locator('#rollPrice').inputValue(), 'R$ 135,00', 'custo do rolo preservado');
+  assert.equal(await oldPage.locator('#wear').inputValue(), 'R$ 3,50', 'desgaste preservado');
+  assert.equal(await oldPage.locator('#margin').inputValue(), '25', 'margem preservada');
+  await oldPage.close();
   assert.deepEqual(errors, [], 'sem erros de script no navegador');
   console.log('Navegação, custos, rascunho, cálculo, imagem, histórico e responsividade: OK.');
 } finally {
