@@ -1,177 +1,125 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0a111c">
-  <meta name="description" content="Orçamentos simples para impressão 3D. Calcule custos, defina seu lucro e compartilhe com seu cliente.">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Orçamentos | JH3 Dimensões</title>
-  <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="apple-touch-icon" href="./icon-192.png">
-  <link rel="icon" href="./icon-192.png">
-  <link rel="stylesheet" href="./style.css">
-  <script type="module" src="./app.mjs"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1018">
+<meta name="description" content="JH3 Dimensões — calcule o preço de sua impressão 3D com facilidade.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Orçamentos | JH3 Dimensões</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="icon" href="./icon-192.png">
+<link rel="stylesheet" href="./style.css">
+<script type="module" src="./app.mjs"></script>
 </head>
 <body>
-  <header class="topbar">
-    <div class="top-inner">
-      <a class="brand" href="./" aria-label="JH3 Dimensões, página inicial">
-        <img src="./logo.webp" width="58" height="58" alt="">
-        <span><strong>JH3 <b>DIMENSÕES</b></strong><small>ORÇAMENTOS DE IMPRESSÃO 3D</small></span>
-      </a>
-      <button type="button" id="settings" class="outline top-action">⚙ <span>Custos fixos</span></button>
-    </div>
-  </header>
+<header class="top">
+ <div class="header-inner">
+  <div class="brand"><img src="./logo.webp" alt="" width="54" height="54"><div><strong>JH3 <span>DIMENSÕES</span></strong><small>Impressões 3D</small></div></div>
+  <span class="header-tag">Orçamentos</span>
+ </div>
+</header>
+<main>
+<nav class="tabs" aria-label="Áreas do sistema">
+  <button id="tab-quote" class="tab active" type="button" aria-controls="quote-view" aria-selected="true">▤ <span>Orçamento</span></button>
+  <button id="tab-settings" class="tab" type="button" aria-controls="settings-view" aria-selected="false">⚙ <span>Meus custos</span></button>
+</nav>
 
-  <main>
-    <section class="welcome">
-      <p class="eyebrow">FAÇA EM POUCOS PASSOS</p>
-      <h1>Quanto cobrar por sua impressão?</h1>
-      <p>Copie o peso e o tempo do Bambu Studio. Nós calculamos o restante.</p>
-      <div class="statusline"><span class="dot"></span><span id="settings-status">Verificando custos salvos...</span></div>
-    </section>
+<section id="quote-view">
+ <div class="intro"><p class="eyebrow">NOVA VENDA</p><h1>Quanto cobrar?</h1><p>Informe os dados da impressão. O resto a gente calcula.</p></div>
+ <div id="first-setup" class="notice setup-notice" hidden>
+  <div><strong>Primeiro acesso?</strong><p>Confira e salve os custos da sua impressora antes do primeiro orçamento.</p></div>
+  <button id="setup-now" type="button" class="button-outline">Configurar custos <span aria-hidden="true">→</span></button>
+ </div>
 
-    <div class="layout">
-      <form class="card quote" id="quote" novalidate>
-        <div class="card-head">
-          <span class="step">01</span>
-          <div><h2>Dados da peça</h2><p>Os números vêm da tela de fatiamento da impressora.</p></div>
-        </div>
+ <form id="quote-form" class="panel" novalidate>
+  <div class="section-title"><span class="number">1</span><div><h2>Dados da impressão</h2><p>Veja essas informações no Bambu Studio.</p></div></div>
+  <div class="field"><label for="piece">O que você vai imprimir? <span class="optional-label">opcional</span></label><input id="piece" maxlength="90" autocomplete="off" placeholder="Ex.: Chaveiro com nome"></div>
+  <div class="field"><label for="grams">Quanto de filamento? <span class="unit">gramas</span></label><input id="grams" inputmode="decimal" autocomplete="off" placeholder="Ex.: 45,5" required><p class="helper">Coloque o peso total indicado no Bambu Studio.</p></div>
+  <div class="field"><label for="quantity">Quantas peças no total?</label><input id="quantity" type="number" inputmode="numeric" min="1" max="100000" step="1" value="1" required></div>
+  <label class="label-row" for="hours">Quanto tempo vai imprimir?</label>
+  <div class="time-row">
+   <div class="field"><input id="hours" type="number" inputmode="numeric" min="0" max="10000" step="1" value="0" required><label class="below" for="hours">Horas</label></div>
+   <div class="field"><input id="minutes" type="number" inputmode="numeric" min="0" max="59" step="1" value="0" required><label class="below" for="minutes">Minutos</label></div>
+  </div>
+  <p class="hint">Use o <strong>tempo total</strong> da placa, mesmo se houver várias peças.</p>
 
-        <label for="piece">Nome da peça <small>(opcional)</small></label>
-        <input id="piece" name="piece" maxlength="90" autocomplete="off" placeholder="Ex.: Chaveiro personalizado">
+  <details class="expandable">
+    <summary><span class="expand-icon">+</span> Adicionar embalagem ou acabamento <span class="muted">(opcional)</span></summary>
+    <div class="field"><label for="extras">Outros gastos <span class="unit">R$</span></label><input id="extras" inputmode="decimal" placeholder="Ex.: 3,00"><p class="helper">Embalagem, cola, argola, entrega...</p></div>
+    <div class="field"><label for="laborMinutes">Tempo de acabamento <span class="unit">minutos</span></label><input id="laborMinutes" type="number" min="0" max="100000" step="1" placeholder="0"><p class="helper">Tempo gasto lixando, montando ou embalando. Não inclui o tempo da impressora.</p></div>
+  </details>
+  <details class="expandable">
+    <summary><span class="expand-icon">+</span> Usar nome de um link MakerWorld</summary>
+    <div class="field"><label for="model-link">Link do modelo</label><input id="model-link" type="url" autocomplete="off" placeholder="https://makerworld.com/..."></div>
+    <button type="button" id="identify" class="button-outline">Preencher nome da peça</button>
+    <p id="model-status" class="helper" role="status"></p>
+    <a id="model-page" hidden rel="noopener noreferrer" target="_blank">Abrir o modelo</a>
+    <p class="helper">O peso e o tempo ainda devem ser informados manualmente.</p>
+  </details>
+  <p id="quote-error" class="error" role="alert"></p>
+  <button class="button-primary main-action" type="submit">Calcular preço <span aria-hidden="true">→</span></button>
+  <button id="clear" class="clear-button" type="button">Limpar para novo orçamento</button>
+ </form>
 
-        <div class="fields">
-          <div class="field">
-            <label for="grams">Filamento usado <span class="unit">gramas</span></label>
-            <input id="grams" name="grams" inputmode="decimal" autocomplete="off" required placeholder="Ex.: 48,5" aria-describedby="grams-help">
-            <small class="assist" id="grams-help">Peso total mostrado no Bambu Studio</small>
-          </div>
-          <div class="field">
-            <label for="quantity">Quantidade <span class="unit">peças</span></label>
-            <input id="quantity" name="quantity" type="number" required min="1" max="100000" step="1" value="1">
-            <small class="assist">Peças produzidas com esse peso e tempo</small>
-          </div>
-          <div class="field">
-            <label for="hours">Tempo de impressão <span class="unit">horas</span></label>
-            <input id="hours" name="hours" type="number" required min="0" max="10000" step="1" value="0">
-          </div>
-          <div class="field">
-            <label for="minutes">Tempo de impressão <span class="unit">minutos</span></label>
-            <input id="minutes" name="minutes" type="number" required min="0" max="59" step="1" value="0">
-          </div>
-        </div>
+ <section id="result" class="panel result" hidden aria-labelledby="result-title">
+  <div class="section-title"><span class="number">2</span><div><h2 id="result-title" tabindex="-1">Preço calculado</h2><p>Este é o valor sugerido para cobrar.</p></div></div>
+  <p class="eyebrow">VALOR TOTAL</p>
+  <output id="total" class="price">—</output>
+  <p id="units" class="units"></p>
+  <div class="values">
+   <div><span>Custo estimado</span><strong id="cost-label"></strong></div>
+   <div><span>Seu lucro estimado</span><strong id="profit-label"></strong></div>
+  </div>
+  <details class="expandable"><summary><span class="expand-icon">+</span> Ver como o preço foi calculado</summary>
+   <dl id="costs" class="costs"></dl><p class="helper">Valores estimados. A lista de custos não será enviada ao cliente.</p>
+  </details>
+  <button id="share" class="button-primary main-action" type="button" disabled>Compartilhar com o cliente</button>
+  <div class="two-actions">
+   <button id="copy" class="button-outline" type="button" disabled>Copiar mensagem</button>
+   <button id="download" class="button-outline" type="button" disabled>Salvar imagem</button>
+  </div>
+  <p id="share-status" class="helper" role="status"></p>
+  <p class="helper">O cliente vê somente o nome da peça, a quantidade e o preço.</p>
+ </section>
+ <section id="history-section" class="history" hidden>
+   <div class="history-heading"><h2>Orçamentos anteriores</h2><button id="clear-history" class="clear-button" type="button">Apagar</button></div>
+   <div id="history-list"></div>
+   <p class="helper">O histórico fica salvo só neste aparelho.</p>
+ </section>
+</section>
 
-        <div class="tip"><span aria-hidden="true">i</span><p><strong>Importante:</strong> use o peso e o tempo do lote inteiro. Se o Bambu Studio mostra quatro peças, informe quantidade 4.</p></div>
-
-        <details class="optional">
-          <summary>+ Embalagem, acabamento ou outros custos</summary>
-          <div class="fields">
-            <div class="field">
-              <label for="extras">Gastos extras <span class="unit">R$</span></label>
-              <input id="extras" inputmode="decimal" autocomplete="off" placeholder="0,00">
-              <small class="assist">Cola, embalagem, argola, transporte...</small>
-            </div>
-            <div class="field">
-              <label for="laborMinutes">Seu tempo de trabalho <span class="unit">min</span></label>
-              <input id="laborMinutes" type="number" min="0" max="100000" step="1" placeholder="0">
-              <small class="assist">Lixar, montar ou embalar. Não é o tempo de impressão.</small>
-            </div>
-          </div>
-        </details>
-
-        <details class="optional link-block">
-          <summary>+ Tenho o link do MakerWorld</summary>
-          <label for="model-link">Link do modelo</label>
-          <input id="model-link" type="url" placeholder="https://makerworld.com/...">
-          <button class="subtle" id="identify" type="button">Usar nome do link</button>
-          <p class="assist" id="model-status" role="status"></p>
-          <a id="model-page" hidden target="_blank" rel="noopener noreferrer">Abrir modelo no MakerWorld</a>
-          <small class="assist">O link ajuda com o nome. O peso e o tempo devem vir do fatiamento.</small>
-        </details>
-
-        <p class="error" id="quote-error" role="alert"></p>
-        <button type="submit" class="primary calculate-btn">Calcular meu preço <span aria-hidden="true">→</span></button>
-        <button class="quiet" type="button" id="clear">Limpar dados da peça</button>
-      </form>
-
-      <section class="card summary" id="result" aria-labelledby="result-heading">
-        <div class="card-head">
-          <span class="step">02</span>
-          <div><h2 id="result-heading" tabindex="-1">Seu orçamento</h2><p>Pronto para enviar ao cliente.</p></div>
-        </div>
-        <p class="eyebrow price-label">PREÇO SUGERIDO PARA O PEDIDO</p>
-        <output id="total" class="price">—</output>
-        <p id="units" class="summary-note" aria-live="polite">Preencha os dados e toque em “Calcular meu preço”.</p>
-
-        <div id="summary-extra" hidden>
-          <div class="mini-stats">
-            <div><small>Custo estimado</small><strong id="cost-label">—</strong></div>
-            <div><small>Lucro estimado</small><strong id="profit-label">—</strong></div>
-          </div>
-          <details id="breakdown" class="breakdown">
-            <summary>Entender de onde veio esse valor</summary>
-            <dl id="costs"></dl>
-            <p class="assist">O lucro mostrado já considera os custos e as taxas configuradas. É uma estimativa, não uma garantia.</p>
-          </details>
-          <div class="action-area">
-            <button type="button" class="primary" id="share" disabled>Compartilhar orçamento</button>
-            <div class="action-row">
-              <button type="button" class="outline" id="copy" disabled>Copiar mensagem</button>
-              <button type="button" class="outline" id="download" disabled>Baixar imagem</button>
-            </div>
-          </div>
-          <p id="share-status" class="assist" role="status"></p>
-          <p class="privacy-note">A imagem para o cliente mostra somente peça, quantidade e preço — nunca seus custos ou lucro.</p>
-        </div>
-      </section>
-    </div>
-
-    <section class="history-section" id="history-section" hidden>
-      <div class="history-title"><div><p class="eyebrow">SALVOS NESTE APARELHO</p><h2>Orçamentos recentes</h2></div><button id="clear-history" type="button" class="quiet">Apagar histórico</button></div>
-      <div id="history-list" class="history-list"></div>
-    </section>
-
-    <p class="page-foot">JH3 Dimensões · A peça que faltava no seu dia a dia.</p>
-  </main>
-
-  <dialog id="preferences" aria-labelledby="preferences-title">
-    <form id="preferences-form" class="settings-form" novalidate>
-      <div class="settings-heading"><span class="step">⚙</span><div><h2 id="preferences-title">Custos da sua impressão</h2><p>Configure uma vez. Depois, é só calcular.</p></div></div>
-      <div class="notice">Esses valores ficam <strong>salvos somente neste aparelho</strong>. Os números iniciais são exemplos: ajuste aos custos reais da JH3.</div>
-      <div class="settings-scroll">
-        <h3>Material e energia</h3>
-        <div class="fields">
-          <div class="field"><label for="rollPrice">Preço do rolo <span class="unit">R$</span></label><input id="rollPrice" inputmode="decimal" required placeholder="Ex.: 90,00"></div>
-          <div class="field"><label for="rollGrams">Peso do rolo <span class="unit">g</span></label><input id="rollGrams" inputmode="decimal" required placeholder="1000"></div>
-          <div class="field"><label for="tariff">Tarifa de luz <span class="unit">R$/kWh</span></label><input id="tariff" inputmode="decimal" required placeholder="Ex.: 1,00"></div>
-          <div class="field"><label for="watts">Consumo médio <span class="unit">W</span></label><input id="watts" inputmode="decimal" required placeholder="Ex.: 100"></div>
-        </div>
-        <small class="assist">Na A1 Mini, informe uma potência média estimada ou medida, e não a potência máxima indicada na fonte.</small>
-
-        <h3>Máquina e preço</h3>
-        <div class="fields">
-          <div class="field"><label for="wear">Desgaste da máquina <span class="unit">R$/h</span></label><input id="wear" inputmode="decimal" required placeholder="Ex.: 1,50"></div>
-          <div class="field"><label for="margin">Margem de lucro <span class="unit">%</span></label><input id="margin" inputmode="decimal" required placeholder="Ex.: 30"></div>
-        </div>
-        <small class="assist">Margem de 30% significa que o lucro desejado representa 30% do preço de venda, antes de custos não cadastrados.</small>
-
-        <details class="optional settings-advanced">
-          <summary>+ Ajustes extras (opcional)</summary>
-          <div class="fields">
-            <div class="field"><label for="waste">Sobra de filamento <span class="unit">%</span></label><input id="waste" inputmode="decimal" placeholder="5"><small class="assist">Suportes, purga e perdas não incluídas no peso</small></div>
-            <div class="field"><label for="failure">Reserva para falhas <span class="unit">%</span></label><input id="failure" inputmode="decimal" placeholder="5"><small class="assist">Aplicada sobre impressão, energia e desgaste</small></div>
-            <div class="field"><label for="fee">Taxa sobre a venda <span class="unit">%</span></label><input id="fee" inputmode="decimal" placeholder="0"><small class="assist">Cartão, marketplace ou outras taxas</small></div>
-            <div class="field"><label for="laborHourly">Valor do seu trabalho <span class="unit">R$/h</span></label><input id="laborHourly" inputmode="decimal" placeholder="0"><small class="assist">Usado quando informar minutos de acabamento</small></div>
-            <div class="field full"><label for="minPrice">Preço mínimo por pedido <span class="unit">R$</span></label><input id="minPrice" inputmode="decimal" placeholder="0"><small class="assist">Nunca sugerir menos que este valor</small></div>
-          </div>
-        </details>
-        <p id="settings-error" class="error" role="alert"></p>
-      </div>
-      <div class="settings-actions"><button class="primary" type="submit">Salvar meus custos</button><button class="outline" id="close-settings" type="button">Voltar</button></div>
-    </form>
-  </dialog>
+<section id="settings-view" hidden>
+ <div class="intro"><p class="eyebrow">SALVO NO SEU APARELHO</p><h1>Meus custos</h1><p>Preencha uma vez. Depois, você só informa os dados de cada impressão.</p></div>
+ <div class="notice"><strong>Antes de começar</strong><p>Os números iniciais são exemplos. Coloque os valores reais que você paga. Eles não são enviados para nenhum servidor.</p></div>
+ <form id="settings-form" class="panel" novalidate>
+  <div class="section-title"><span class="number">1</span><div><h2>Filamento</h2><p>Quanto custa seu rolo de material?</p></div></div>
+  <div class="field"><label for="rollPrice">Preço pago pelo rolo <span class="unit">R$</span></label><input id="rollPrice" inputmode="decimal" required placeholder="Ex.: 90,00"></div>
+  <div class="field"><label for="rollGrams">Peso do rolo <span class="unit">gramas</span></label><input id="rollGrams" inputmode="decimal" required placeholder="1000"></div>
+  <hr>
+  <div class="section-title"><span class="number">2</span><div><h2>Energia elétrica</h2><p>O valor da conta de luz e o consumo médio.</p></div></div>
+  <div class="field"><label for="tariff">Preço da energia <span class="unit">R$/kWh</span></label><input id="tariff" inputmode="decimal" required placeholder="Ex.: 1,00"></div>
+  <div class="field"><label for="watts">Consumo médio da impressora <span class="unit">W</span></label><input id="watts" inputmode="decimal" required placeholder="Ex.: 100"><p class="helper">Use o consumo médio medido ou estimado, não a potência máxima da fonte.</p></div>
+  <hr>
+  <div class="section-title"><span class="number">3</span><div><h2>Impressora e lucro</h2><p>Quanto reservar para a máquina e quanto ganhar.</p></div></div>
+  <div class="field"><label for="wear">Desgaste por hora <span class="unit">R$/h</span></label><input id="wear" inputmode="decimal" required placeholder="Ex.: 1,50"></div>
+  <div class="field"><label for="margin">Margem de lucro desejada <span class="unit">%</span></label><input id="margin" inputmode="decimal" required placeholder="Ex.: 30"><p class="helper">30% significa que o lucro representa cerca de 30% do valor da venda, após os custos previstos.</p></div>
+  <details class="expandable">
+   <summary><span class="expand-icon">+</span> Opções avançadas <span class="muted">(opcional)</span></summary>
+   <div class="field"><label for="waste">Perda extra de filamento <span class="unit">%</span></label><input id="waste" inputmode="decimal" placeholder="5"></div>
+   <div class="field"><label for="failure">Reserva para falhas <span class="unit">%</span></label><input id="failure" inputmode="decimal" placeholder="5"></div>
+   <div class="field"><label for="fee">Taxas da venda <span class="unit">%</span></label><input id="fee" inputmode="decimal" placeholder="0"><p class="helper">Taxas de cartão e plataformas.</p></div>
+   <div class="field"><label for="laborHourly">Preço da hora de acabamento <span class="unit">R$/h</span></label><input id="laborHourly" inputmode="decimal" placeholder="0"></div>
+   <div class="field"><label for="minPrice">Preço mínimo por pedido <span class="unit">R$</span></label><input id="minPrice" inputmode="decimal" placeholder="0"></div>
+  </details>
+  <p id="settings-error" class="error" role="alert"></p>
+  <button class="button-primary main-action" type="submit">Salvar meus custos <span aria-hidden="true">✓</span></button>
+  <button id="back-quote" class="clear-button" type="button">Voltar ao orçamento</button>
+ </form>
+</section>
+<footer>JH3 Dimensões · A peça que faltava no seu dia a dia.</footer>
+</main>
 </body>
 </html>
