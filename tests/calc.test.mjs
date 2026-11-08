@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { calculate, decimal, defaultSettings, makerWorldModel } from '../calc.mjs';
+import { calculate, decimal, defaultSettings, makerWorldModel, parsePercentage } from '../calc.mjs';
 
 test('aceita valores brasileiros e rejeita entradas ambíguas', () => {
   assert.equal(decimal('90,50'), 90.5);
@@ -78,5 +78,54 @@ test('markup personalizado preserva lucro planejado após taxas', () => {
   const result = calculate(settings, { grams: 100, quantity: 1, hours: 1, minutes: 0, markup: 75 });
   assert.equal(result.price, 19.45);
   assert.ok(result.profit >= 7.5);
-  assert.throws(() => calculate(settings, { grams: 100, quantity: 1, hours: 1, minutes: 0, markup: 1001 }));
+  assert.ok(calculate(settings, { grams: 100, quantity: 1, hours: 1, minutes: 0, markup: 1001 }).price > 100);
+});
+
+
+test('lucro personalizado sem teto de 1.000%: preço calculado sobre custo', () => {
+  const settings = {
+    ...defaultSettings, rollPrice: 100, rollGrams: 1000,
+    tariff: 0, watts: 0, wear: 0, waste: 0, failure: 0,
+    fee: 0, minPrice: 0, laborHourly: 0
+  };
+  const job = { grams: 100, quantity: 1, hours: 1, minutes: 0, extras: 0, laborMinutes: 0 };
+  for (const [percent, price, profit] of [
+    [25, 12.5, 2.5], [50, 15, 5], [75, 17.5, 7.5],
+    [100, 20, 10], [150, 25, 15],
+    [1000, 110, 100], [2500, 260, 250],
+    [10000, 1010, 1000], [100000, 10010, 10000]
+  ]) {
+    const result = calculate(settings, { ...job, markup: percent });
+    assert.equal(result.cost, 10);
+    assert.equal(result.price, price, 'preço com ' + percent + '%');
+    assert.equal(result.profit, profit, 'lucro com ' + percent + '%');
+  }
+});
+
+test('lucro acima de 1.000% com taxa continua preservando o acréscimo', () => {
+  const settings = {
+    ...defaultSettings, rollPrice: 100, rollGrams: 1000,
+    tariff: 0, watts: 0, wear: 0, waste: 0, failure: 0,
+    fee: 10, minPrice: 0, laborHourly: 0
+  };
+  const result = calculate(settings, {
+    grams: 100, quantity: 1, hours: 1, minutes: 0, markup: 2500
+  });
+  assert.equal(result.price, 288.89);
+  assert.ok(result.profit >= 250);
+});
+
+test('interpreta porcentagens grandes no formato brasileiro', () => {
+  assert.equal(parsePercentage('1.000'), 1000);
+  assert.equal(parsePercentage('1.000%'), 1000);
+  assert.equal(parsePercentage('2.500,50'), 2500.5);
+  assert.equal(parsePercentage('2500.5'), 2500.5);
+  assert.equal(parsePercentage('100000'), 100000);
+  assert.equal(parsePercentage('0'), 0);
+  assert.ok(Number.isNaN(parsePercentage('-1')));
+  assert.ok(Number.isNaN(parsePercentage('')));
+  assert.ok(Number.isNaN(parsePercentage('2abc')));
+  assert.throws(() => calculate(defaultSettings, {
+    grams: 100, quantity: 1, hours: 1, minutes: 0, markup: Infinity
+  }));
 });
