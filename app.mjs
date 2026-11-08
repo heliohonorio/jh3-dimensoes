@@ -56,7 +56,7 @@ function switchView(view) {
   $('tab-settings').classList.toggle('active', !showQuote);
   $('tab-quote').setAttribute('aria-selected', String(showQuote));
   $('tab-settings').setAttribute('aria-selected', String(!showQuote));
-  window.scrollTo({ top: 0, behavior: 'instant' });
+  window.scrollTo({ top: 0, behavior: 'auto' });
 }
 $('tab-quote').addEventListener('click', () => switchView('quote'));
 $('tab-settings').addEventListener('click', () => switchView('settings'));
