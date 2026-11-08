@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0a1324">
+<meta name="description" content="Calculadora de orçamentos de impressão 3D da JH3 Dimensões.">
+<title>Orçamentos • JH3 Dimensões</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<link rel="stylesheet" href="style.css">
+<script type="module" src="app.mjs"></script>
+</head>
+<body>
+<header class="top"><div class="brand"><img src="logo.webp" alt="" width="52" height="52"><div><strong>JH3 Dimensões</strong><span>Impressões 3D</span></div></div><button id="settings" type="button" class="secondary">Configurações</button></header>
+<main>
+<div class="intro"><p class="eyebrow">IMPRESSÃO 3D</p><h1>Novo orçamento</h1><p>Informe o peso e o tempo do Bambu Studio para calcular o preço.</p></div>
+<div class="layout">
+<form id="quote" class="card">
+<h2>Dados da impressão</h2>
+<details class="import"><summary>Colar link do MakerWorld</summary><label>Link do modelo<input id="model-link" type="url" placeholder="https://makerworld.com/…" autocomplete="off"></label><button id="identify" type="button" class="secondary">Identificar modelo</button><p id="model-status" role="status"></p><a id="model-page" hidden target="_blank" rel="noopener noreferrer">Abrir modelo no MakerWorld ↗</a></details>
+<label>Nome da peça <small>opcional</small><input id="piece" maxlength="90" placeholder="Ex.: Suporte para celular"></label>
+<div class="fields">
+<label>Filamento total (g)<input id="grams" required inputmode="decimal" placeholder="Ex.: 48,5"></label>
+<label>Quantidade<input id="quantity" type="number" required min="1" max="100000" value="1"></label>
+<label>Horas de impressão<input id="hours" type="number" required min="0" max="10000" value="0"></label>
+<label>Minutos de impressão<input id="minutes" type="number" required min="0" max="59" value="0"></label>
+</div>
+<p class="hint">Use o peso e o tempo totais para a quantidade informada.</p>
+<details><summary>Embalagem, acabamento e outros custos</summary><label>Extras para o pedido (R$)<input id="extras" inputmode="decimal" placeholder="0,00"></label></details>
+<p id="quote-error" class="error" role="alert"></p>
+<button class="primary" type="submit">Calcular orçamento</button>
+</form>
+<section class="card result" id="result" aria-labelledby="result-heading">
+<p class="eyebrow">PARA O CLIENTE</p><h2 id="result-heading" tabindex="-1">Preço do orçamento</h2>
+<output id="total">—</output><p id="units" aria-live="polite">O preço aparece aqui depois do cálculo.</p>
+<details id="breakdown" hidden><summary>Ver custos e lucro estimado</summary><dl id="costs"></dl></details>
+<button class="primary" id="share" type="button" disabled>Compartilhar orçamento</button>
+<button class="secondary" id="download" type="button" disabled>Baixar imagem</button>
+<p id="share-status" role="status"></p>
+</section>
+</div>
+<p class="foot">A peça que faltava no seu dia a dia.</p>
+</main>
+<dialog id="preferences">
+<form id="preferences-form" class="card">
+<h2>Configurações</h2><p>Preencha uma vez. Os valores ficam salvos neste aparelho.</p>
+<div class="fields">
+<label>Preço do rolo (R$)<input id="rollPrice" required inputmode="decimal" placeholder="Ex.: 90,00"></label>
+<label>Peso líquido do rolo (g)<input id="rollGrams" required inputmode="decimal" value="1000"></label>
+<label>Energia (R$/kWh)<input id="tariff" required inputmode="decimal" placeholder="Ex.: 1,00"></label>
+<label>Potência média (W)<input id="watts" required inputmode="decimal" placeholder="Ex.: 100"></label>
+<label>Desgaste por hora (R$)<input id="wear" required inputmode="decimal" placeholder="Ex.: 1,50"></label>
+<label>Margem de lucro (%)<input id="margin" required inputmode="decimal" placeholder="Ex.: 30"></label>
+</div>
+<p class="hint">A margem é a parte do preço final que fica como lucro. Valores nos exemplos são ilustrativos.</p>
+<p id="settings-error" class="error" role="alert"></p>
+<button class="primary" type="submit">Salvar configurações</button>
+<button class="secondary" id="close-settings" type="button">Voltar</button>
+</form>
+</dialog>
+</body>
+</html>
