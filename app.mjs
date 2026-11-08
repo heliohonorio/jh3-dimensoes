@@ -1,4 +1,4 @@
-import { calculate, decimal, defaultSettings, makerWorldModel } from './calc.mjs';
+import { calculate, decimal, defaultSettings, makerWorldModel, parsePercentage } from './calc.mjs';
 import { formatCurrency, installCurrencyMasks } from './currency.mjs';
 import { inspectProjectFile, fetchSlicedFile } from './project-import.mjs';
 
@@ -182,7 +182,7 @@ function getJob() {
     minutes: decimal($('minutes').value),
     extras: decimal($('extras').value.trim() || '0'),
     laborMinutes: decimal($('laborMinutes').value.trim() || '0'),
-    markup: chosenMarkup() === 'custom' ? decimal($('markup-custom').value) : Number(chosenMarkup())
+    markup: chosenMarkup() === 'custom' ? parsePercentage($('markup-custom').value) : Number(chosenMarkup())
   };
 }
 $('quote-form').addEventListener('input', event => {
@@ -399,8 +399,8 @@ $('quote-form').addEventListener('submit', event => {
     $('hours').focus();
     return;
   }
-  if (chosenMarkup() === 'custom' && (!Number.isFinite(job.markup) || job.markup < 0 || job.markup > 1000)) {
-    $('quote-error').textContent = 'Informe a porcentagem personalizada entre 0% e 1000%.';
+  if (chosenMarkup() === 'custom' && (!Number.isFinite(job.markup) || job.markup < 0)) {
+    $('quote-error').textContent = 'Informe um percentual de lucro válido, igual ou maior que zero. Por exemplo: 1000 ou 2.500.';
     $('markup-custom').focus();
     return;
   }
