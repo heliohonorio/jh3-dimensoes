@@ -11,7 +11,7 @@ export function decimal(value) {
 }
 
 export const defaultSettings = Object.freeze({
-  rollPrice: 90, rollGrams: 1000, tariff: 1, watts: 100, wear: 1.5,
+  rollPrice: 90, rollGrams: 1000, tariff: 0.96, watts: 84, wear: 1.5,
   margin: 30, waste: 5, failure: 5, fee: 0, laborHourly: 0, minPrice: 0
 });
 
