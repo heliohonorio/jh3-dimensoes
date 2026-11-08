@@ -8,24 +8,26 @@ test('aceita valores brasileiros e rejeita entradas ambíguas', () => {
   assert.equal(decimal('1.000'), 1);
   assert.ok(Number.isNaN(decimal('12abc')));
   assert.ok(Number.isNaN(decimal('')));
+  assert.equal(decimal('R$ 0,96'), 0.96);
+  assert.equal(decimal('R$ 1.234,56'), 1234.56);
 });
 test('calcula filamento, energia, máquina e margem sobre a venda', () => {
   const out = calculate({ ...defaultSettings, waste: 0, failure: 0, fee: 0 },
     { grams: 100, hours: 2, minutes: 0, quantity: 2, extras: 0, laborMinutes: 0 });
   assert.equal(out.filament, 9);
-  assert.equal(out.energy, 0.2);
+  assert.equal(out.energy, 0.16128);
   assert.equal(out.machine, 3);
-  assert.equal(out.price, 17.43);
-  assert.equal(out.unit, 8.715);
+  assert.equal(out.price, 17.38);
+  assert.equal(out.unit, 8.69);
   assert.ok(out.actualMargin >= 30);
 });
 test('inclui desperdício, reserva, acabamento e taxas da venda', () => {
   const out = calculate({ ...defaultSettings, waste: 10, failure: 10, fee: 5, laborHourly: 20 },
     { grams: 100, hours: 1, minutes: 30, quantity: 1, extras: 4, laborMinutes: 30 });
   assert.ok(Math.abs(out.filament - 9.9) < 1e-8);
-  assert.ok(Math.abs(out.energy - .15) < 1e-8);
+  assert.ok(Math.abs(out.energy - .12096) < 1e-8);
   assert.ok(Math.abs(out.machine - 2.25) < 1e-8);
-  assert.ok(Math.abs(out.reserve - 1.23) < 1e-8);
+  assert.ok(Math.abs(out.reserve - 1.227096) < 1e-8);
   assert.ok(Math.abs(out.labor - 10) < 1e-8);
   assert.ok(out.profit > 0);
   assert.ok(out.actualMargin >= 30);
@@ -45,4 +47,12 @@ test('não aceita quantidades fracionadas, horas inválidas nem taxa + margem >=
 test('extrai nome de link confiável sem acessar rede', () => {
   assert.equal(makerWorldModel('https://makerworld.com/pt/models/123-suporte-para-celular').title, 'Suporte para celular');
   assert.throws(() => makerWorldModel('https://makerworld.com.evil.test/models/123'));
+});
+
+test('usa tarifa real de referência e consumo médio da A1 Mini + AMS Lite', () => {
+  assert.equal(defaultSettings.tariff, 0.96);
+  assert.equal(defaultSettings.watts, 84);
+  const print = calculate({ ...defaultSettings, wear: 0, waste: 0, failure: 0, margin: 0 },
+    { grams: 1, hours: 10, minutes: 0, quantity: 1 });
+  assert.ok(Math.abs(print.energy - 0.8064) < 1e-8);
 });
