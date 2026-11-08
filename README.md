@@ -13,7 +13,7 @@ Abra a guia **Meus custos** e revise os valores da empresa: rolo, energia, desga
 3. Selecione **um lucro desejado** por orçamento: **25%, 50%, 75%, 100%, 150% ou Personalizado**.
 4. Calcule o preço, confira o resultado e compartilhe com o cliente.
 
-**100% e 150% são acréscimos sobre o custo, não margens de lucro sobre o preço de venda.** Fórmula: preço base = custo × (1 + percentual ÷ 100) ÷ (1 − taxa ÷ 100). Por exemplo, R$ 10,00 de custo + 100% de acréscimo = R$ 20,00 sem taxas. Com taxa de venda, o cálculo preserva o lucro sobre o custo. O sistema aplica um eventual preço mínimo configurado.
+**O lucro é um acréscimo sobre o custo, não uma margem sobre o preço de venda.** O campo Personalizado não tem teto percentual predefinido: aceita 1.000%, 2.500%, 10.000% e outros percentuais que possam ser calculados com segurança. Fórmula: preço = custo × (1 + percentual ÷ 100) ÷ (1 − taxa ÷ 100). Exemplo sem taxas: custo R$ 10,00 + 100% = venda R$ 20,00; + 1.000% = R$ 110,00; + 2.500% = R$ 260,00. Com taxas, o cálculo preserva o acréscimo escolhido sobre o custo. O preço mínimo opcional também continua válido.
 
 O cálculo também considera filamento, perda adicional, eletricidade, desgaste, reserva de falhas, acabamento e demais custos informados.
 
