@@ -17,12 +17,13 @@ jobs:
         with:
           node-version: '22'
       - name: Testar cálculos
-        run: node --test tests/calc.test.mjs tests/currency.test.mjs
+        run: node --test tests/calc.test.mjs tests/currency.test.mjs tests/project-import.test.mjs
       - name: Conferir sintaxe
         run: |
           node --check app.mjs
           node --check calc.mjs
           node --check currency.mjs
+          node --check project-import.mjs
           node --check sw.js
       - name: Instalar navegador de teste
         run: |
