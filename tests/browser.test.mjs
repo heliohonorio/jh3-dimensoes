@@ -73,6 +73,31 @@ try {
   assert.ok(await importSummary.locator('.expand-icon').evaluate(node =>
     node.getBoundingClientRect().width >= 32), 'seta maior e visível');
 
+  // Reproduz o defeito observado no PWA: antes, a engrenagem desaparecia ao rolar.
+  await page.evaluate(() => window.scrollTo(0, 850));
+  await page.waitForTimeout(160);
+  const headerAtScroll = await page.locator('.top').evaluate(node => {
+    const rect = node.getBoundingClientRect();
+    return {
+      top: rect.top,
+      offset: parseFloat(getComputedStyle(node).top) || 0,
+      bottom: rect.bottom,
+      height: rect.height
+    };
+  });
+  assert.ok(Math.abs(headerAtScroll.top - headerAtScroll.offset) <= 2,
+    'o cabeçalho permanece fixo abaixo da área segura do iPhone');
+  const gearAtScroll = await page.locator('#tab-settings').boundingBox();
+  assert.ok(gearAtScroll && gearAtScroll.y >= 0 &&
+    gearAtScroll.y + gearAtScroll.height < 844,
+    'engrenagem permanece dentro da tela depois de rolar');
+  await page.locator('#tab-settings').click();
+  assert.equal(await page.locator('#settings-view').isVisible(), true,
+    'a engrenagem pode ser usada mesmo depois da rolagem');
+  await page.locator('#tab-settings').click();
+  assert.equal(await page.locator('#quote-view').isVisible(), true,
+    'a engrenagem permite retornar ao orçamento');
+
   assert.equal(await page.locator('dialog').count(), 0, 'sem modais nem rolagem dentro de pop-up');
   await page.locator('#setup-now').click();
   assert.equal(await page.locator('#settings-view').isVisible(), true, 'custos abrem em tela normal');
