@@ -362,3 +362,63 @@ footer{text-align:center;padding:36px 3px 0;color:#94abba;font-size:.8rem}
   .new-quote-row{margin:-4px 0 15px}
   .new-quote-button{font-size:.92rem;padding:11px 15px}
 }
+
+
+/* Tela de entrada: só as duas opções. Os campos só aparecem após a escolha. */
+.home-view{
+  min-height:calc(100svh - 92px - env(safe-area-inset-top,0px));
+  display:flex;align-items:center;justify-content:center;
+  padding:32px 0 70px;
+}
+.home-buttons{display:grid;gap:17px;width:100%;max-width:560px}
+.home-tile{
+  width:100%;min-height:128px;display:flex;align-items:center;
+  gap:16px;border-radius:20px;padding:22px;
+  text-align:left;cursor:pointer;border:1px solid transparent;
+  transition:background .15s ease,transform .15s ease;
+  box-shadow:0 8px 28px #00000028;
+}
+.home-tile-import{background:#29b77c;border-color:#5ce6aa;color:#062d1c}
+.home-tile-import:hover{background:#42ce94}
+.home-tile-new{background:#19394b;border-color:#63a9c5;color:#f0faff}
+.home-tile-new:hover{background:#234c60}
+.home-tile:active{transform:scale(.993)}
+.home-tile:focus-visible{outline:3px solid #9cecff;outline-offset:3px}
+.home-tile-icon{
+  flex:0 0 51px;width:51px;height:51px;
+  display:grid;place-items:center;border-radius:15px;
+  font-size:1.95rem;font-weight:850;line-height:1;
+  background:#0b774d;color:#f0fff6;
+}
+.home-tile-new .home-tile-icon{background:#275e79;color:#e6faff}
+.home-tile-copy{min-width:0;display:flex;flex-direction:column;gap:6px;flex:1}
+.home-tile-copy strong{font-size:1.21rem;line-height:1.22;font-weight:850;letter-spacing:-.025em}
+.home-tile-copy small{font-size:.84rem;line-height:1.35;font-weight:550;opacity:.82}
+.home-tile-arrow{font-size:2.1rem;line-height:1;opacity:.77;flex:none}
+.back-home{
+  display:inline-flex;align-items:center;min-height:46px;
+  padding:9px 12px;margin:15px 0 9px;
+  font-weight:700;font-size:.91rem;color:#bed6e3;
+  border:1px solid #344e5e;border-radius:11px;background:#142535;
+}
+.back-home:hover{background:#1c3546;color:#f3fcff}
+.back-home:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.import-screen{max-width:700px;margin:auto}
+.import-screen .stage-card{margin-top:7px}
+.import-continue{width:100%;margin:18px 0 10px;min-height:61px;font-size:1.05rem}
+.imported-note{
+  background:#153b2e;border:1px solid #438c67;
+  color:#d8ffeb;border-radius:13px;padding:13px 15px;
+  line-height:1.5;font-size:.88rem;margin:0 0 18px;
+}
+#quote-view .intro{padding-top:9px}
+@media(max-width:480px){
+  .home-view{min-height:calc(100svh - 84px - env(safe-area-inset-top,0px));padding:26px 1px 48px}
+  .home-buttons{gap:15px}
+  .home-tile{min-height:126px;padding:20px 15px;gap:12px;border-radius:17px}
+  .home-tile-icon{flex-basis:45px;width:45px;height:45px;border-radius:12px;font-size:1.7rem}
+  .home-tile-copy strong{font-size:1.1rem}
+  .home-tile-copy small{font-size:.78rem}
+  .home-tile-arrow{font-size:1.8rem}
+}
+@media(prefers-reduced-motion:reduce){.home-tile{transition:none}}
