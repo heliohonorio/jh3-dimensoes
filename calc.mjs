@@ -68,6 +68,38 @@ export function calculate(settings, job) {
   };
 }
 
+
+/**
+ * Valores para a tela do orçamento, em centavos.
+ * Apenas a apresentação é arredondada: o cálculo de custo e lucro não muda.
+ * A diferença residual de arredondamento fica no lucro exibido, de modo que
+ * custo + lucro + taxas seja EXATAMENTE o total em reais e centavos.
+ */
+export function quoteBreakdown(result, quantity) {
+  if (!Number.isInteger(quantity) || quantity < 1 ||
+      ![result.cost, result.profit, result.fees, result.price].every(Number.isFinite)) {
+    throw new Error('Não foi possível separar o preço deste orçamento.');
+  }
+  const costCents = Math.round(result.cost * 100);
+  const feeCents = Math.round(result.fees * 100);
+  const priceCents = Math.round(result.price * 100);
+  if (![costCents, feeCents, priceCents].every(Number.isSafeInteger)) {
+    throw new Error('Valor alto demais para apresentar em centavos com segurança.');
+  }
+  const profitCents = priceCents - costCents - feeCents;
+  return {
+    quantity,
+    cost: costCents / 100,
+    fees: feeCents / 100,
+    profit: profitCents / 100,
+    price: priceCents / 100,
+    costPerPiece: costCents / (100 * quantity),
+    profitPerPiece: profitCents / (100 * quantity),
+    pricePerPiece: priceCents / (100 * quantity),
+    roundedPerPiece: (Math.round(priceCents / quantity) * quantity !== priceCents)
+  };
+}
+
 export function makerWorldModel(value) {
   const url = new URL(String(value).trim());
   if (url.protocol !== 'https:' || url.port || url.username || url.password ||
