@@ -51,40 +51,49 @@ try {
   });
   await page.goto('http://127.0.0.1:8765/', { waitUntil: 'networkidle' });
 
-  assert.equal(await page.locator('#quote-view').isVisible(), true, 'orçamento aparece no primeiro acesso');
-  assert.equal(await page.locator('#first-setup').isVisible(), true, 'primeiro acesso avisa sobre custos');
-  assert.equal(await page.locator('#clear').isVisible(), true, 'botão Novo orçamento visível no topo');
-  assert.equal(await page.locator('#hours').inputValue(), '', 'horas começam sem zero');
-  assert.equal(await page.locator('#minutes').inputValue(), '', 'minutos começam sem zero');
-  assert.equal(await page.locator('#grams').inputValue(), '', 'gramas começam vazios');
-  assert.equal(await page.locator('nav.tabs').count(), 0,
-    'barra grande de navegação foi removida');
-  assert.equal(await page.locator('#tab-quote').count(), 0);
-  assert.equal(await page.locator('#tab-settings').isVisible(), true,
-    'engrenagem discreta continua acessível');
+  assert.equal(await page.locator('#home-view').isVisible(), true, 'abre só a tela inicial');
+  assert.equal(await page.locator('#quote-view').isVisible(), false, 'campos ficam ocultos antes da escolha');
+  assert.equal(await page.locator('#import-view').isVisible(), false, 'importação começa fechada');
+  assert.equal(await page.locator('.home-tile').count(), 2, 'exatamente dois botões principais');
+  assert.equal(await page.locator('#home-import').isVisible(), true);
+  assert.equal(await page.locator('#home-new-quote').isVisible(), true);
+  assert.equal(await page.locator('#tab-settings').isVisible(), true, 'engrenagem discreta acessível');
   const gear = await page.locator('#tab-settings').boundingBox();
-  assert.ok(gear && gear.width <= 48 && gear.height <= 48,
-    'engrenagem não domina o cabeçalho');
+  assert.ok(gear && gear.width <= 48 && gear.height <= 48, 'engrenagem pequena no cabeçalho');
   assert.equal(await page.locator('#tab-settings').getAttribute('aria-label'),
     'Configurar meus custos');
-  assert.equal(await page.locator('#quote-form .stage-card').count(), 4,
-    'orçamento dividido em quatro áreas visíveis');
-  assert.equal(await page.locator('#step-import').textContent(), 'Já tem um projeto?');
-  assert.equal(await page.locator('#step-details').textContent(), 'Dados da peça');
-  assert.equal(await page.locator('#step-profit').textContent(), 'Escolha seu lucro');
+  await page.locator('#home-import').click();
+  assert.equal(await page.locator('#import-view').isVisible(), true, 'Importar abre caminho próprio');
+  assert.equal(await page.locator('#quote-view').isVisible(), false, 'sem campos do orçamento na importação');
   const importSummary = page.locator('#project-import > summary');
   assert.equal(await importSummary.evaluate(node => getComputedStyle(node).backgroundColor),
-    'rgb(47, 184, 121)', 'importação recebe destaque verde');
+    'rgb(47, 184, 121)', 'importação permanece verde');
   assert.ok(await importSummary.evaluate(node => node.getBoundingClientRect().height >= 70),
-    'importação tem área ampla de toque');
-  await importSummary.click();
+    'área de importação grande');
   assert.equal(await page.locator('#project-import').getAttribute('open'), '',
-    'toque abre a área de importação');
+    'importação já abre sem exigir segundo toque');
   await importSummary.click();
-  assert.equal(await page.locator('#project-import').getAttribute('open'), null,
-    'novo toque fecha a área de importação');
-  assert.ok(await importSummary.locator('.expand-icon').evaluate(node =>
-    node.getBoundingClientRect().width >= 32), 'seta maior e visível');
+  assert.equal(await page.locator('#project-import').getAttribute('open'), null);
+  await importSummary.click();
+  assert.equal(await page.locator('#project-import').getAttribute('open'), '');
+  assert.equal(await page.locator('#import-continue').isVisible(), false,
+    'não é possível continuar antes de ler um projeto');
+  await page.locator('#import-back').click();
+  assert.equal(await page.locator('#home-view').isVisible(), true);
+  await page.locator('#home-new-quote').click();
+  assert.equal(await page.locator('#quote-view').isVisible(), true, 'Novo orçamento abre campos');
+  assert.equal(await page.locator('#import-view').isVisible(), false, 'Novo orçamento NÃO mostra importação');
+  assert.equal(await page.locator('#project-import').isVisible(), false);
+  assert.equal(await page.locator('#quote-form .stage-card').count(), 3,
+    'formulário contém apenas dados, outros gastos e lucro');
+  assert.equal(await page.locator('#step-details').textContent(), 'Dados da peça');
+  assert.equal(await page.locator('#step-profit').textContent(), 'Escolha seu lucro');
+  assert.equal(await page.locator('#first-setup').isVisible(), true,
+    'primeiro orçamento avisa sobre custos');
+  assert.equal(await page.locator('#clear').isVisible(), true);
+  assert.equal(await page.locator('#hours').inputValue(), '');
+  assert.equal(await page.locator('#minutes').inputValue(), '');
+  assert.equal(await page.locator('#grams').inputValue(), '');
 
   // Reproduz o defeito observado no PWA: antes, a engrenagem desaparecia ao rolar.
   await page.evaluate(() => window.scrollTo(0, 850));
@@ -175,6 +184,9 @@ try {
   await page.evaluate(() => localStorage.setItem('jh3-draft-v2',
     JSON.stringify({ piece: 'Orçamento antigo', grams: '999', hours: '0', minutes: '0' })));
   await page.reload({ waitUntil: 'networkidle' });
+  assert.equal(await page.locator('#home-view').isVisible(), true,
+    'ao recarregar volta à tela com duas opções');
+  await page.locator('#home-new-quote').click();
   assert.equal(await page.locator('#first-setup').isVisible(), false, 'custos permanecem salvos');
   assert.equal(await page.locator('#piece').inputValue(), '', 'não recupera nome do orçamento antigo');
   assert.equal(await page.locator('#grams').inputValue(), '', 'não recupera gramas do orçamento antigo');
@@ -249,6 +261,8 @@ try {
   const price2500 = parsePrice(await page.locator('#total').textContent());
   assert.ok(price2500 > price1000, '2.500,50% também é aceito');
   await page.reload({ waitUntil: 'networkidle' });
+  assert.equal(await page.locator('#home-view').isVisible(), true);
+  await page.locator('#home-new-quote').click();
   assert.equal(await page.locator('input[name="markup"][value="50"]').isChecked(), true,
     'cada abertura começa com a opção padrão de lucro');
   assert.equal(await page.locator('#markup-custom').inputValue(), '',
