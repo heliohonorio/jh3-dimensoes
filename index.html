@@ -89,7 +89,7 @@
       <label for="markup-custom">Digite sua porcentagem (%)</label>
       <input id="markup-custom" type="text" inputmode="decimal" autocomplete="off" placeholder="Ex.: 1.000 ou 2.500,50">
     </div>
-    <p class="helper" id="profit-help">Você decide: se a peça custar R$ 10,00, com 100% o preço será R$ 20,00; com 1.000%, R$ 110,00, antes de taxas.</p>
+    <p class="helper" id="profit-help">Você decide: se a peça custar R$ 10,00, com 100% o preço será R$ 20,00; com 1.000%, R$ 110,00, no total.</p>
   </fieldset>
   </section>
 
@@ -116,7 +116,7 @@
       <span class="piece-card-help" id="chosen-profit">Lucro escolhido para este pedido.</span>
     </div>
   </div>
-  <p class="helper unit-explainer" id="unit-explainer">São médias por peça. A soma do pedido usa os valores totais para não perder centavos.</p>
+  <p class="helper unit-explainer" id="unit-explainer">Total = (custo de 1 peça + lucro de 1 peça) × quantidade.</p>
 
   <div class="sum-sheet" aria-label="Soma do custo e do lucro">
     <h3>Somando tudo</h3>
@@ -150,7 +150,7 @@
    <button id="download" class="button-outline" type="button" disabled>Salvar imagem</button>
   </div>
   <p id="share-status" class="helper" role="status"></p>
-  <p class="helper">O cliente vê somente o nome da peça, a quantidade e o preço de venda.</p>
+  <p class="helper">O cliente recebe somente o logo, a quantidade de peças e o valor total.</p>
  </section>
  <section id="history-section" class="history" hidden>
    <div class="history-heading"><h2>Orçamentos anteriores</h2><button id="clear-history" class="clear-button" type="button">Apagar</button></div>
@@ -180,12 +180,12 @@
   <section class="stage-card" aria-labelledby="cost-options">
   <div class="section-title"><span class="number">4</span><div><h2 id="cost-options">Mais opções</h2><p>Use somente se precisar ajustar outros gastos.</p></div></div>
   <details class="expandable">
-   <summary><span class="summary-label"><strong>Ver outros ajustes</strong><small>Perdas, taxas e preço mínimo</small></span><span class="expand-icon" aria-hidden="true"></span></summary>
+   <summary><span class="summary-label"><strong>Ver outros ajustes</strong><small>Perdas e trabalho de acabamento</small></span><span class="expand-icon" aria-hidden="true"></span></summary>
    <div class="field"><label for="waste">Filamento que pode ser desperdiçado <span class="unit">%</span></label><input id="waste" inputmode="decimal" placeholder="5"></div>
    <div class="field"><label for="failure">Reserva se a impressão der errado <span class="unit">%</span></label><input id="failure" inputmode="decimal" placeholder="5"></div>
-   <div class="field"><label for="fee">Taxa do cartão ou da plataforma <span class="unit">%</span></label><input id="fee" inputmode="decimal" placeholder="0"><p class="helper">Taxas de cartão e plataformas.</p></div>
+   <div class="field" hidden><label for="fee">Taxa do cartão ou da plataforma <span class="unit">%</span></label><input id="fee" inputmode="decimal" placeholder="0"><p class="helper">Taxas de cartão e plataformas.</p></div>
    <div class="field"><label for="laborHourly">Quanto vale sua hora de trabalho <span class="unit">R$/h</span></label><input id="laborHourly" data-currency inputmode="numeric" placeholder="R$ 0,00"></div>
-   <div class="field"><label for="minPrice">Menor preço que você quer cobrar <span class="unit">R$</span></label><input id="minPrice" data-currency inputmode="numeric" placeholder="R$ 0,00"></div>
+   <div class="field" hidden><label for="minPrice">Menor preço que você quer cobrar <span class="unit">R$</span></label><input id="minPrice" data-currency inputmode="numeric" placeholder="R$ 0,00"></div>
   </details>
   </section>
   <div class="quote-actions">

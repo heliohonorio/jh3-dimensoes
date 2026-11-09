@@ -72,11 +72,11 @@ test('lucro de 100% e 150% é acréscimo sobre o custo, não margem de venda', (
   assert.equal(twoAndHalf.price, 25);
   assert.equal(twoAndHalf.profit, 15);
 });
-test('markup personalizado preserva lucro planejado após taxas', () => {
+test('markup soma somente custo e lucro, mesmo com taxa antiga salva', () => {
   const settings = { ...defaultSettings, rollPrice: 100, rollGrams: 1000,
     tariff: 0, watts: 0, wear: 0, failure: 0, waste: 0, fee: 10 };
   const result = calculate(settings, { grams: 100, quantity: 1, hours: 1, minutes: 0, markup: 75 });
-  assert.equal(result.price, 19.45);
+  assert.equal(result.price, 17.5);
   assert.ok(result.profit >= 7.5);
   assert.ok(calculate(settings, { grams: 100, quantity: 1, hours: 1, minutes: 0, markup: 1001 }).price > 100);
 });
@@ -102,7 +102,7 @@ test('lucro personalizado sem teto de 1.000%: preço calculado sobre custo', () 
   }
 });
 
-test('lucro acima de 1.000% com taxa continua preservando o acréscimo', () => {
+test('lucro acima de 1.000% usa apenas o acréscimo escolhido', () => {
   const settings = {
     ...defaultSettings, rollPrice: 100, rollGrams: 1000,
     tariff: 0, watts: 0, wear: 0, waste: 0, failure: 0,
@@ -111,7 +111,7 @@ test('lucro acima de 1.000% com taxa continua preservando o acréscimo', () => {
   const result = calculate(settings, {
     grams: 100, quantity: 1, hours: 1, minutes: 0, markup: 2500
   });
-  assert.equal(result.price, 288.89);
+  assert.equal(result.price, 260);
   assert.ok(result.profit >= 250);
 });
 
@@ -140,15 +140,13 @@ test('mesmos dados mantêm custo fixo ao trocar de 50% para 100%', () => {
   const job = { grams: 27.28, quantity: 3, hours: 1, minutes: 0 };
   const half = calculate(settings, { ...job, markup: 50 });
   const double = calculate(settings, { ...job, markup: 100 });
-  assert.equal(half.cost, 27.28);
-  assert.equal(double.cost, 27.28);
-  assert.equal(half.profit, 13.64);
-  assert.equal(double.profit, 27.28);
+  assert.equal(half.cost, 27.27);
+  assert.equal(double.cost, 27.27);
+  assert.equal(half.profit, 13.65);
+  assert.equal(double.profit, 27.27);
   assert.equal(half.price, 40.92);
-  assert.equal(double.price, 54.56);
-  // O unitário é a média exata: arredondar 18,1866 para 18,19
-  // pode gerar diferença de um centavo se multiplicado por três.
-  assert.ok(Math.abs(double.unit - 54.56 / 3) < 1e-9);
+  assert.equal(double.price, 54.54);
+  assert.equal(double.unit, 18.18);
 });
 
 test('taxas de venda não alteram o custo de produção quando lucro muda', () => {
@@ -161,7 +159,8 @@ test('taxas de venda não alteram o custo de produção quando lucro muda', () =
   const half = calculate(settings, { ...job, markup: 50 });
   const double = calculate(settings, { ...job, markup: 100 });
   assert.equal(half.cost, double.cost);
-  assert.ok(double.fees > half.fees, 'taxa de venda cresce com o preço');
+  assert.equal(double.fees, 0);
+  assert.equal(half.fees, 0);
   assert.ok(double.price > half.price, 'preço de venda cresce com lucro');
 });
 
@@ -174,17 +173,17 @@ test('apresenta custo, lucro e total separados para três peças', () => {
   };
   const job = { grams: 27.28, quantity: 3, hours: 1, minutes: 0 };
   for (const [markup, expectedTotal, expectedProfit] of [
-    [50, 40.92, 13.64],
-    [100, 54.56, 27.28]
+    [50, 40.92, 13.65],
+    [100, 54.54, 27.27]
   ]) {
     const result = calculate(settings, { ...job, markup });
     const amounts = quoteBreakdown(result, 3);
-    assert.equal(amounts.cost, 27.28);
+    assert.equal(amounts.cost, 27.27);
     assert.equal(amounts.profit, expectedProfit);
     assert.equal(amounts.price, expectedTotal);
-    assert.equal(amounts.cost + amounts.profit + amounts.fees, expectedTotal);
-    assert.ok(amounts.roundedPerPiece === (markup === 100));
-    assert.ok(Math.abs(amounts.costPerPiece - 27.28 / 3) < 1e-10);
+    assert.equal(Math.round((amounts.cost + amounts.profit + amounts.fees) * 100), Math.round(expectedTotal * 100));
+    assert.equal(amounts.roundedPerPiece, false);
+    assert.ok(Math.abs(amounts.costPerPiece - 27.27 / 3) < 1e-10);
   }
 });
 
@@ -209,7 +208,7 @@ test('o preço exibido soma custo, lucro e taxas exatamente em centavos', () => 
   }
 });
 
-test('soma com preço mínimo mostra lucro residual sem inventar custo', () => {
+test('preço mínimo antigo não altera custo mais lucro escolhido', () => {
   const settings = {
     ...defaultSettings, rollPrice: 100, rollGrams: 1000,
     tariff: 0, watts: 0, wear: 0, failure: 0, waste: 0,
@@ -220,6 +219,19 @@ test('soma com preço mínimo mostra lucro residual sem inventar custo', () => {
   });
   const summary = quoteBreakdown(result, 2);
   assert.equal(summary.cost, 5);
-  assert.equal(summary.profit, 25);
-  assert.equal(summary.price, 30);
+  assert.equal(summary.profit, 1.26);
+  assert.equal(summary.price, 6.26);
+});
+
+test('caso da imagem fecha duas peças em R$ 12,18 com lucro de 50%', () => {
+  const settings = { ...defaultSettings, rollPrice: 1000, rollGrams: 1000,
+    tariff: 0, watts: 0, wear: 0, waste: 0, failure: 0 };
+  const result = calculate(settings, { grams: 8.11, quantity: 2, hours: 1, minutes: 0, markup: 50 });
+  const view = quoteBreakdown(result, 2);
+  assert.equal(view.costPerPiece, 4.06);
+  assert.equal(view.profitPerPiece, 2.03);
+  assert.equal(view.pricePerPiece, 6.09);
+  assert.equal(view.cost, 8.12);
+  assert.equal(view.profit, 4.06);
+  assert.equal(view.price, 12.18);
 });

@@ -434,12 +434,10 @@ $('quote-form').addEventListener('submit', event => {
   $('total').textContent = formatMoney.format(amounts.price);
   $('units').textContent = job.quantity === 1
     ? '1 peça · preço final'
-    : job.quantity + ' peças · ' + (amounts.roundedPerPiece ? 'média de ' : '') +
-      formatMoney.format(amounts.pricePerPiece) + ' por peça' +
-      (amounts.roundedPerPiece ? ' (arredondado)' : '');
+    : job.quantity + ' peças · ' + formatMoney.format(amounts.pricePerPiece) + ' por peça';
   $('unit-explainer').textContent = job.quantity === 1
     ? 'Valores separados para facilitar a conferência do custo e do lucro.'
-    : 'Valores médios por peça, arredondados para centavos. A soma final usa os totais completos do pedido.';
+    : 'Total = (custo de 1 peça + lucro de 1 peça) × quantidade.';
   showCosts(result, amounts);
   saveDraft();
   saveHistory(result, job);
@@ -482,14 +480,9 @@ $('clear').addEventListener('click', () => {
 
 function messageFor(result) {
   return [
-    'JH3 DIMENSÕES — Orçamento de impressão 3D', '',
-    'Peça: ' + result.name,
+    'JH3 DIMENSÕES — Orçamento', '',
     'Quantidade: ' + result.quantity + (result.quantity === 1 ? ' peça' : ' peças'),
-    'Valor total: ' + formatMoney.format(result.price),
-    ...(result.quantity > 1 ? ['Preço médio de venda por peça: ' +
-      formatMoney.format(result.unit) + ' (valor arredondado)'] : []),
-    '', 'Prazo e entrega: a combinar.',
-    'JH3 Dimensões · A peça que faltava no seu dia a dia.'
+    'Valor total: ' + formatMoney.format(result.price)
   ].join('\n');
 }
 async function copyMessage() {
@@ -545,18 +538,9 @@ async function buildImage(result) {
   ctx.font = 'bold 30px system-ui';
   ctx.fillText('ORÇAMENTO DE IMPRESSÃO 3D', 540, 490);
   ctx.fillStyle = '#f5f8fb';
-  ctx.font = 'bold 53px system-ui';
-  const words = result.name.split(/\s+/);
-  let first = '', second = '';
-  for (const word of words) {
-    if ((first + ' ' + word).trim().length <= 27 || !first) first = (first + ' ' + word).trim();
-    else second = (second + ' ' + word).trim();
-  }
-  ctx.fillText(first, 540, second ? 594 : 615, 855);
-  if (second) ctx.fillText(second, 540, 654, 855);
   ctx.fillStyle = '#bed2de';
-  ctx.font = '32px system-ui';
-  ctx.fillText(result.quantity + (result.quantity === 1 ? ' peça' : ' peças'), 540, 740);
+  ctx.font = '40px system-ui';
+  ctx.fillText('Quantidade: ' + result.quantity + (result.quantity === 1 ? ' peça' : ' peças'), 540, 670);
   ctx.strokeStyle = '#3b6173';
   ctx.beginPath();
   ctx.moveTo(185, 785);
@@ -568,17 +552,6 @@ async function buildImage(result) {
   ctx.fillStyle = '#66d8ec';
   ctx.font = 'bold 90px system-ui';
   ctx.fillText(formatMoney.format(result.price), 540, 978, 850);
-  if (result.quantity > 1) {
-    ctx.fillStyle = '#d7e4e9';
-    ctx.font = '30px system-ui';
-    ctx.fillText('Média: ' + formatMoney.format(result.unit) + ' por peça', 540, 1055);
-  }
-  ctx.fillStyle = '#b6cad5';
-  ctx.font = '26px system-ui';
-  ctx.fillText('Prazo e entrega: a combinar', 540, 1155);
-  ctx.fillStyle = '#88afc0';
-  ctx.font = '22px system-ui';
-  ctx.fillText('JH3 Dimensões · A peça que faltava no seu dia a dia.', 540, 1232, 880);
   const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
   if (!blob) throw new Error('Imagem indisponível.');
   return new File([blob], 'Orcamento-JH3-Dimensoes.png', { type: 'image/png' });

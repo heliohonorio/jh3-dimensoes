@@ -53,13 +53,28 @@ export function calculate(settings, job) {
   const machine = duration * wear;
   const reserve = (filament + energy + machine) * failure / 100;
   const labor = laborMinutes / 60 * laborHourly;
-  const cost = filament + energy + machine + reserve + labor + extras;
-  const rawPrice = usesMarkup
-    ? cost * (1 + markup / 100) / (1 - fee / 100)
-    : cost / (1 - (margin + fee) / 100);
-  // Arredonda para cima, nunca para baixo da margem pretendida.
+  const productionCost = filament + energy + machine + reserve + labor + extras;
+  if (usesMarkup) {
+    // Fecha cada peça em centavos antes de multiplicar pela quantidade.
+    const unitCostCents = Math.round((productionCost / quantity + Number.EPSILON) * 100);
+    const unitProfitCents = Math.round(unitCostCents * markup / 100 + Number.EPSILON);
+    const totalCents = (unitCostCents + unitProfitCents) * quantity;
+    if (![unitCostCents, unitProfitCents, totalCents].every(Number.isSafeInteger)) {
+      throw new Error('O percentual ou o custo informado é grande demais para calcular com segurança.');
+    }
+    const cost = unitCostCents * quantity / 100;
+    const profit = unitProfitCents * quantity / 100;
+    const price = totalCents / 100;
+    return {
+      filament, energy, machine, reserve, labor, extras, fees: 0, cost, price, profit,
+      unit: (unitCostCents + unitProfitCents) / 100,
+      actualMargin: price ? profit / price * 100 : 0, duration
+    };
+  }
+  const cost = productionCost;
+  const rawPrice = cost / (1 - (margin + fee) / 100);
   const price = Math.max(Math.ceil((rawPrice - 1e-9) * 100) / 100, minPrice);
-  if (!Number.isFinite(price)) throw new Error('O percentual ou o custo informado é grande demais para calcular com segurança.');
+  if (!Number.isFinite(price)) throw new Error('O custo informado é grande demais para calcular com segurança.');
   const fees = price * fee / 100;
   const profit = price - cost - fees;
   return {
@@ -71,7 +86,7 @@ export function calculate(settings, job) {
 
 /**
  * Valores para a tela do orçamento, em centavos.
- * Apenas a apresentação é arredondada: o cálculo de custo e lucro não muda.
+ * Os totais dos novos orçamentos vêm da soma dos valores por peça.
  * A diferença residual de arredondamento fica no lucro exibido, de modo que
  * custo + lucro + taxas seja EXATAMENTE o total em reais e centavos.
  */
