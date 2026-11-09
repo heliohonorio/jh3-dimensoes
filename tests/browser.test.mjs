@@ -44,6 +44,16 @@ try {
 
   assert.equal(await page.locator('#quote-view').isVisible(), true, 'orçamento aparece no primeiro acesso');
   assert.equal(await page.locator('#first-setup').isVisible(), true, 'primeiro acesso avisa sobre custos');
+  assert.equal(await page.locator('nav.tabs').count(), 0,
+    'barra grande de navegação foi removida');
+  assert.equal(await page.locator('#tab-quote').count(), 0);
+  assert.equal(await page.locator('#tab-settings').isVisible(), true,
+    'engrenagem discreta continua acessível');
+  const gear = await page.locator('#tab-settings').boundingBox();
+  assert.ok(gear && gear.width <= 48 && gear.height <= 48,
+    'engrenagem não domina o cabeçalho');
+  assert.equal(await page.locator('#tab-settings').getAttribute('aria-label'),
+    'Configurar meus custos');
   assert.equal(await page.locator('#quote-form .stage-card').count(), 4,
     'orçamento dividido em quatro áreas visíveis');
   assert.equal(await page.locator('#step-import').textContent(), 'Já tem um projeto?');
@@ -89,6 +99,13 @@ try {
 
   assert.equal(await page.locator('#quote-view').isVisible(), true, 'salvar custos retorna ao orçamento');
   assert.equal(await page.locator('#first-setup').isVisible(), false);
+  await page.locator('#tab-settings').click();
+  assert.equal(await page.locator('#settings-view').isVisible(), true,
+    'custos continuam disponíveis após primeiro uso');
+  await page.locator('#tab-settings').click();
+  assert.equal(await page.locator('#quote-view').isVisible(), true,
+    'engrenagem também retorna ao orçamento');
+
   await page.locator('#piece').fill('Chaveiro JH3');
   await page.locator('#grams').fill('100');
   await page.locator('#quantity').fill('2');
@@ -233,7 +250,7 @@ try {
   await page.screenshot({ path: 'screenshots/mobile-pequeno.png', fullPage: true });
 
   await page.setViewportSize({ width: 1280, height: 800 });
-  await page.locator('#tab-quote').click();
+  await page.locator('#back-quote').click();
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true,
     'cabe também na versão computador');
   await page.screenshot({ path: 'screenshots/computador.png', fullPage: true });
