@@ -19,7 +19,8 @@ let current = null;
 let currentFile = null;
 let generation = 0;
 let history = [];
-let isReturningFromSettings = false;
+let returnAfterSettings = 'home';
+let activeView = 'home';
 
 function storeGet(key) {
   try { return JSON.parse(localStorage.getItem(key)); } catch { return null; }
@@ -63,18 +64,26 @@ const loaded = storeGet(historyKey);
 history = Array.isArray(loaded) ? loaded.filter(x => x && typeof x.name === 'string' && Number.isFinite(x.price)).slice(0, 8) : [];
 
 function switchView(view) {
-  const showQuote = view === 'quote';
-  $('quote-view').hidden = !showQuote;
-  $('settings-view').hidden = showQuote;
-  $('tab-settings').classList.toggle('active', !showQuote);
-  $('tab-settings').setAttribute('aria-expanded', String(!showQuote));
+  if (!['home', 'import', 'quote', 'settings'].includes(view)) return;
+  if (view === 'settings' && activeView !== 'settings') returnAfterSettings = activeView;
+  activeView = view;
+  for (const id of ['home', 'import', 'quote', 'settings']) {
+    $(id + '-view').hidden = id !== view;
+  }
+  $('tab-settings').classList.toggle('active', view === 'settings');
+  $('tab-settings').setAttribute('aria-expanded', String(view === 'settings'));
   window.scrollTo({ top: 0, behavior: 'auto' });
 }
-// Custos ficam acessíveis pela engrenagem discreta do cabeçalho.
+// As configurações continuam acessíveis pela engrenagem, mas não ocupam a tela inicial.
 $('tab-settings').addEventListener('click', () =>
-  switchView($('settings-view').hidden ? 'settings' : 'quote'));
-$('setup-now').addEventListener('click', () => { isReturningFromSettings = true; switchView('settings'); });
-$('back-quote').addEventListener('click', () => switchView('quote'));
+  switchView(activeView === 'settings' ? returnAfterSettings : 'settings'));
+$('setup-now').addEventListener('click', () => switchView('settings'));
+$('back-quote').addEventListener('click', () => switchView(returnAfterSettings));
+$('back-home').addEventListener('click', () => switchView('home'));
+$('import-back').addEventListener('click', () => switchView('home'));
+$('import-continue').addEventListener('click', () => {
+  if (!$('import-continue').hidden) switchView('quote');
+});
 
 function updateSetupNotice() {
   $('first-setup').hidden = Boolean(settings);
@@ -111,8 +120,7 @@ $('settings-form').addEventListener('submit', event => {
   const persisted = storeSet(settingsKey, valid);
   updateSetupNotice();
   invalidateQuote();
-  isReturningFromSettings = false;
-  switchView('quote');
+  switchView(returnAfterSettings);
   if (!persisted) {
     alert('Os valores foram aplicados, mas o navegador não permitiu salvá-los. Evite usar o modo privado.');
   }
@@ -352,7 +360,6 @@ $('quote-form').addEventListener('submit', event => {
   $('quote-error').textContent = '';
   if (!settings) {
     $('quote-error').textContent = 'Primeiro salve seus custos. É só configurar uma vez.';
-    isReturningFromSettings = true;
     switchView('settings');
     return;
   }
@@ -434,7 +441,7 @@ $('quote-form').addEventListener('submit', event => {
   });
 });
 
-function startNewQuote() {
+function resetQuoteFields() {
   $('quote-form').reset();
   for (const id of ['piece', 'grams', 'hours', 'minutes', 'extras', 'laborMinutes',
                     'model-link', 'markup-custom', 'project-file']) {
@@ -446,14 +453,30 @@ function startNewQuote() {
   $('quote-form').querySelectorAll('details').forEach(section => { section.open = false; });
   $('import-info').hidden = true;
   $('import-info').textContent = '';
+  $('import-continue').hidden = true;
+  $('imported-note').hidden = true;
+  $('imported-note').textContent = '';
   $('model-page').hidden = true;
   $('model-status').textContent = '';
+  $('new-quote-status').textContent = '';
   storeRemove(draftKey);
   invalidateQuote();
-  $('new-quote-status').textContent = 'Pronto! Preencha os dados da próxima peça.';
   if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-  $('quote-view').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
+function startNewQuote() {
+  resetQuoteFields();
+  switchView('quote');
+  $('new-quote-status').textContent = 'Pronto! Preencha os dados da próxima peça.';
+}
+$('home-new-quote').addEventListener('click', () => {
+  resetQuoteFields();
+  switchView('quote');
+});
+$('home-import').addEventListener('click', () => {
+  resetQuoteFields();
+  $('project-import').open = true;
+  switchView('import');
+});
 $('clear').addEventListener('click', startNewQuote);
 $('new-quote-result').addEventListener('click', startNewQuote);
 
