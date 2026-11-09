@@ -141,3 +141,128 @@ footer{text-align:center;padding:36px 3px 0;color:#94abba;font-size:.8rem}
 .profit-choice{min-height:53px;font-size:.87rem}
 .profit-fieldset{padding:14px 11px}
 }
+
+
+
+/* Navegação por etapas: cada assunto ocupa seu próprio cartão. */
+.quote-sections,.settings-sections{display:grid;gap:17px}
+.stage-card{background:linear-gradient(155deg,#172534 0%,#141d2a 72%);border:1px solid #35495b;border-radius:20px;padding:22px;min-width:0;box-shadow:0 8px 28px #00000018}
+.stage-card .section-title{margin:0 0 20px;align-items:center}
+.stage-card .section-title h2{font-size:1.19rem;line-height:1.25;margin-bottom:4px;color:#f3f9fc}
+.stage-card .section-title p{color:#bfceda;font-size:.85rem;line-height:1.48}
+.stage-card .number{flex-basis:40px;height:40px;border-radius:12px;background:#254b60;color:#b3eff8;font-size:1.05rem}
+.stage-card>.field:last-child{margin-bottom:0}
+.stage-card .hint{margin-bottom:0}
+.stage-card .label-row{margin-top:4px}
+.stage-card.stage-details{border-left:3px solid #62b6d1}
+.stage-card.stage-profit{border-left:3px solid #62b6d1}
+.stage-card.stage-extras{border-left:3px solid #54758e}
+.quote-actions{background:#122232;border:1px solid #354e61;border-radius:16px;padding:15px 20px 11px;margin-top:2px}
+.quote-actions .main-action{margin-top:3px}
+.quote-actions .error:not(:empty){margin:6px 0 13px}
+.settings-sections .stage-card:last-of-type{margin-bottom:0}
+.settings-sections .stage-card .field:last-of-type{margin-bottom:0}
+.settings-sections .expandable .field{margin-bottom:18px}
+#settings-view .stage-card{margin:0}
+
+/* Botão verde chamativo para importar projetos e arquivos. */
+.stage-import{border:1px solid #386751;background:linear-gradient(155deg,#142d29,#17242c 76%);padding:22px}
+.stage-import .number{color:#c0ffdf;background:#245943}
+.stage-import .project-import{border:0;padding:0;margin:0}
+.stage-import .project-import>summary{
+  display:flex;align-items:center;gap:13px;
+  background:#2fb879;color:#062318;
+  border:1px solid #5be7a5;border-radius:14px;
+  min-height:82px;padding:15px 14px;
+  cursor:pointer;box-shadow:0 6px 20px #0b5c362e;
+  text-decoration:none;
+}
+.stage-import .project-import>summary:hover{background:#49d292}
+.stage-import .project-import>summary:focus-visible{outline:3px solid #b5ffd5;outline-offset:3px}
+.stage-import .project-import[open]>summary{border-radius:14px 14px 9px 9px;background:#3cc687}
+.stage-import .project-import>summary .import-symbol{
+  flex:0 0 40px;width:40px;height:40px;
+  display:grid;place-items:center;border-radius:11px;
+  background:#126a49;color:#fff;font-size:1.75rem;font-weight:900;
+  line-height:1;
+}
+.stage-import .project-import .summary-label strong{font-size:.99rem;letter-spacing:.01em;line-height:1.25;color:#062318}
+.stage-import .project-import .summary-label small{color:#104c36;font-weight:700;font-size:.76rem;line-height:1.45}
+.stage-import .project-import .expand-icon{color:#064329;border-color:#1e9966;background:#d2fbe6}
+.stage-import .import-body{padding:17px 4px 2px}
+.stage-import .import-lead{margin:0 0 20px}
+.stage-import .project-import .field label{font-size:.9rem}
+.stage-import .project-import #identify{background:#1d3b37;border:1px solid #4a896b;min-height:50px;color:#ddfff0;font-weight:750}
+.stage-import .project-import #identify:hover{background:#285346}
+.stage-import .import-separator{display:flex;gap:14px;align-items:center;justify-content:center;margin:18px 0;color:#b6d4c5}
+.stage-import .import-separator::before,.stage-import .import-separator::after{content:"";height:1px;flex:1;background:#426653}
+.stage-import .file-button{
+  min-height:64px;border:1px solid #62e5a5;background:#214c3b;
+  color:#e0ffeb;border-radius:12px;
+  gap:10px;font-size:.96rem;box-shadow:0 2px 10px #00000026;
+}
+.stage-import .file-button span{font-size:1.45rem;line-height:1}
+.stage-import .file-button:hover{background:#28634b}
+.stage-import .import-status{color:#bcffdc}
+.stage-import .import-info{background:#153e2f;border-color:#4f9972;color:#e5fff0}
+
+/* Abertura e fechamento com setas maiores e toque em toda a linha. */
+.expandable{padding:0;border:0;margin:0;min-width:0}
+.expandable>summary{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  min-height:66px;padding:12px 14px;
+  border:1px solid #476278;border-radius:13px;background:#1c3040;
+  color:#ecf8fc;text-decoration:none;cursor:pointer;list-style:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.expandable>summary::-webkit-details-marker{display:none}
+.expandable>summary::marker{content:""}
+.expandable>summary:hover{background:#243d4c;text-decoration:none}
+.expandable>summary:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
+.expandable[open]>summary{background:#223c4c;border-color:#5b8ca5}
+.expandable .summary-label{display:flex;flex:1;flex-direction:column;gap:3px;min-width:0;text-align:left}
+.expandable .summary-label strong{font-size:.91rem;line-height:1.35;font-weight:800;color:#f3fafd}
+.expandable .summary-label small{color:#acc7d6;font-size:.75rem;line-height:1.35;font-weight:550}
+.expandable .expand-icon{
+  width:35px;height:35px;min-width:35px;display:grid;place-items:center;
+  border-radius:10px;border:1px solid #688ba4;
+  background:#2d4c60;color:#e8f7ff;transform:none;
+}
+.expandable .expand-icon::before{
+  content:"";display:block;width:10px;height:10px;
+  border-right:3px solid currentColor;border-bottom:3px solid currentColor;
+  border-radius:1px;transform:translateY(-3px) rotate(45deg);
+  transition:transform .16s ease;
+}
+.expandable[open] .expand-icon{transform:none}
+.expandable[open] .expand-icon::before{transform:translateY(3px) rotate(225deg)}
+.expandable .field:first-of-type{margin-top:16px}
+.stage-extras details>.field:last-child{margin-bottom:8px}
+.stage-extras .expandable{padding:0}
+.stage-extras .expandable>summary{margin:0}
+.stage-profit .profit-fieldset{margin:0;padding:0;border:0;min-width:0}
+.stage-profit .profit-fieldset legend{color:#cadfe8;font-size:.86rem;font-weight:700;padding:0 0 11px}
+.stage-profit .profit-grid{margin:0}
+.stage-profit .profit-choice{min-height:58px}
+#result .expandable{margin:18px 0}
+#result .expandable .costs{margin:14px 0}
+#settings-view .expandable>.field:last-child{margin-bottom:0}
+
+/* Celulares pequenos: sem sobreposição e com botões confortáveis. */
+@media(max-width:480px){
+  .quote-sections,.settings-sections{gap:14px}
+  .stage-card{padding:19px 15px;border-radius:17px}
+  .stage-card .section-title{gap:11px;margin-bottom:18px}
+  .stage-card .section-title h2{font-size:1.12rem}
+  .stage-card .number{height:36px;flex-basis:36px}
+  .stage-import{padding:18px 14px}
+  .stage-import .project-import>summary{padding:14px 11px;gap:9px;min-height:80px}
+  .stage-import .project-import>summary .import-symbol{width:33px;height:33px;flex-basis:33px;font-size:1.4rem}
+  .stage-import .project-import .summary-label strong{font-size:.86rem;letter-spacing:0}
+  .stage-import .project-import .summary-label small{font-size:.7rem}
+  .expandable .expand-icon{width:32px;height:32px;min-width:32px}
+  .expandable .summary-label strong{font-size:.84rem}
+  .quote-actions{padding:12px 15px}
+  .stage-profit .profit-fieldset{margin:0}
+}
+@media(prefers-reduced-motion:reduce){.expandable .expand-icon::before{transition:none}}
