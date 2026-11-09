@@ -1,4 +1,4 @@
-import { calculate, decimal, defaultSettings, makerWorldModel, parsePercentage } from './calc.mjs';
+import { calculate, decimal, defaultSettings, makerWorldModel, parsePercentage, quoteBreakdown } from './calc.mjs';
 import { formatCurrency, installCurrencyMasks } from './currency.mjs';
 import { inspectProjectFile, fetchSlicedFile } from './project-import.mjs';
 
@@ -293,7 +293,7 @@ function addCost(label, value, strong = false) {
   if (strong) { dt.className = 'strong-cost'; dd.className = 'strong-cost'; }
   $('costs').append(dt, dd);
 }
-function showCosts(result) {
+function showCosts(result, amounts) {
   $('costs').replaceChildren();
   addCost('Filamento', result.filament);
   addCost('Energia', result.energy);
@@ -301,9 +301,9 @@ function showCosts(result) {
   addCost('Reserva para falhas', result.reserve);
   addCost('Acabamento', result.labor);
   addCost('Outros gastos', result.extras);
-  addCost('Total dos custos', result.cost, true);
-  addCost('Taxas de venda', result.fees);
-  addCost('Lucro estimado', result.profit, true);
+  addCost('Total dos custos', amounts.cost, true);
+  if (amounts.fees > 0) addCost('Taxas de venda', amounts.fees);
+  addCost('Lucro da venda', amounts.profit, true);
 }
 
 function saveHistory(result, job) {
@@ -403,13 +403,14 @@ $('quote-form').addEventListener('submit', event => {
     $('markup-custom').focus();
     return;
   }
-  let result;
+  let result, amounts;
   try {
     result = {
       ...calculate(settings, job),
       name: $('piece').value.trim() || 'Peça impressa em 3D',
       quantity: job.quantity
     };
+    amounts = quoteBreakdown(result, job.quantity);
   } catch (error) {
     $('quote-error').textContent = error.message;
     return;
@@ -417,17 +418,29 @@ $('quote-form').addEventListener('submit', event => {
   invalidateQuote();
   current = result;
   $('result').hidden = false;
-  $('total').textContent = formatMoney.format(result.price);
-  const roundedUnitCents = Math.round(result.unit * 100);
-  const totalCents = Math.round(result.price * 100);
-  const unitIsApproximate = roundedUnitCents * result.quantity !== totalCents;
-  $('units').textContent = result.quantity === 1
-    ? '1 peça · preço de venda'
-    : result.quantity + ' peças · ' + (unitIsApproximate ? 'média de ' : '') +
-      formatMoney.format(result.unit) + ' por peça' + (unitIsApproximate ? ' (arredondado)' : '');
-  $('cost-label').textContent = formatMoney.format(result.cost);
-  $('profit-label').textContent = formatMoney.format(result.profit);
-  showCosts(result);
+  // Cada parcela é calculada separadamente, e todas somam o valor final.
+  $('cost-per-piece').textContent = formatMoney.format(amounts.costPerPiece);
+  $('profit-per-piece').textContent = formatMoney.format(amounts.profitPerPiece);
+  $('chosen-profit').textContent =
+    job.markup.toLocaleString('pt-BR', { maximumFractionDigits: 4 }) +
+    '% sobre o custo da impressão.';
+  $('sum-quantity').textContent = job.quantity === 1
+    ? 'Soma para 1 peça'
+    : 'Soma para as ' + job.quantity + ' peças';
+  $('cost-label').textContent = formatMoney.format(amounts.cost);
+  $('profit-label').textContent = formatMoney.format(amounts.profit);
+  $('fees-line').hidden = amounts.fees === 0;
+  $('fees-label').textContent = formatMoney.format(amounts.fees);
+  $('total').textContent = formatMoney.format(amounts.price);
+  $('units').textContent = job.quantity === 1
+    ? '1 peça · preço final'
+    : job.quantity + ' peças · ' + (amounts.roundedPerPiece ? 'média de ' : '') +
+      formatMoney.format(amounts.pricePerPiece) + ' por peça' +
+      (amounts.roundedPerPiece ? ' (arredondado)' : '');
+  $('unit-explainer').textContent = job.quantity === 1
+    ? 'Valores separados para facilitar a conferência do custo e do lucro.'
+    : 'Valores médios por peça, arredondados para centavos. A soma final usa os totais completos do pedido.';
+  showCosts(result, amounts);
   saveDraft();
   saveHistory(result, job);
   $('copy').disabled = false;
