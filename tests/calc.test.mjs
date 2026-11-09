@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { calculate, decimal, defaultSettings, makerWorldModel, parsePercentage } from '../calc.mjs';
+import { calculate, decimal, defaultSettings, makerWorldModel, parsePercentage, quoteBreakdown } from '../calc.mjs';
 
 test('aceita valores brasileiros e rejeita entradas ambíguas', () => {
   assert.equal(decimal('90,50'), 90.5);
@@ -163,4 +163,63 @@ test('taxas de venda não alteram o custo de produção quando lucro muda', () =
   assert.equal(half.cost, double.cost);
   assert.ok(double.fees > half.fees, 'taxa de venda cresce com o preço');
   assert.ok(double.price > half.price, 'preço de venda cresce com lucro');
+});
+
+
+test('apresenta custo, lucro e total separados para três peças', () => {
+  const settings = {
+    ...defaultSettings, rollPrice: 1000, rollGrams: 1000, tariff: 0,
+    watts: 0, wear: 0, waste: 0, failure: 0,
+    laborHourly: 0, minPrice: 0, fee: 0
+  };
+  const job = { grams: 27.28, quantity: 3, hours: 1, minutes: 0 };
+  for (const [markup, expectedTotal, expectedProfit] of [
+    [50, 40.92, 13.64],
+    [100, 54.56, 27.28]
+  ]) {
+    const result = calculate(settings, { ...job, markup });
+    const amounts = quoteBreakdown(result, 3);
+    assert.equal(amounts.cost, 27.28);
+    assert.equal(amounts.profit, expectedProfit);
+    assert.equal(amounts.price, expectedTotal);
+    assert.equal(amounts.cost + amounts.profit + amounts.fees, expectedTotal);
+    assert.ok(amounts.roundedPerPiece === (markup === 100));
+    assert.ok(Math.abs(amounts.costPerPiece - 27.28 / 3) < 1e-10);
+  }
+});
+
+test('o preço exibido soma custo, lucro e taxas exatamente em centavos', () => {
+  const settings = {
+    ...defaultSettings, rollPrice: 129.9, rollGrams: 1000, tariff: 0.96,
+    watts: 84, wear: 1.5, waste: 5, failure: 5,
+    laborHourly: 0, minPrice: 0, fee: 7.9
+  };
+  for (const quantity of [1, 2, 3, 7, 12]) {
+    for (const markup of [25, 50, 100, 150, 1000]) {
+      const result = calculate(settings, {
+        grams: 91.6, hours: 3, minutes: 27, quantity, markup
+      });
+      const amounts = quoteBreakdown(result, quantity);
+      const actualSumCents = Math.round(amounts.cost * 100) +
+        Math.round(amounts.profit * 100) +
+        Math.round(amounts.fees * 100);
+      assert.equal(actualSumCents, Math.round(amounts.price * 100));
+      assert.ok(Math.abs(amounts.pricePerPiece * quantity - amounts.price) < 1e-8);
+    }
+  }
+});
+
+test('soma com preço mínimo mostra lucro residual sem inventar custo', () => {
+  const settings = {
+    ...defaultSettings, rollPrice: 100, rollGrams: 1000,
+    tariff: 0, watts: 0, wear: 0, failure: 0, waste: 0,
+    fee: 0, minPrice: 30
+  };
+  const result = calculate(settings, {
+    grams: 50, quantity: 2, hours: 1, minutes: 0, markup: 25
+  });
+  const summary = quoteBreakdown(result, 2);
+  assert.equal(summary.cost, 5);
+  assert.equal(summary.profit, 25);
+  assert.equal(summary.price, 30);
 });
