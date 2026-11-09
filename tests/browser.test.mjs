@@ -290,14 +290,33 @@ try {
   assert.equal(drawnTitle, longTitle,
     'todas as palavras do nome longo aparecem na imagem compartilhada');
 
-  // Um link de página identifica o modelo, mas não inventa tempo ou peso.
-  await page.locator('#project-import summary').click();
+  // Fluxo de importação: link de página só identifica o nome, sem inventar peso.
+  await page.locator('#back-home').click();
+  assert.equal(await page.locator('#home-view').isVisible(), true);
+  await page.locator('#home-import').click();
+  assert.equal(await page.locator('#project-import').getAttribute('open'), '');
   await page.locator('#model-link').fill('https://makerworld.com/pt/models/123-suporte-para-celular');
   await page.locator('#identify').click();
   await page.waitForFunction(() => document.querySelector('#model-status').textContent.includes('não fornece peso'));
   assert.equal(await page.locator('#piece').inputValue(), 'Suporte para celular');
-  assert.equal(await page.locator('#grams').inputValue(), '100');
-  
+  assert.equal(await page.locator('#grams').inputValue(), '');
+  assert.equal(await page.locator('#hours').inputValue(), '');
+  assert.equal(await page.locator('#import-continue').isVisible(), true,
+    'link reconhecido pode continuar para preenchimento manual');
+  await page.locator('#import-continue').click();
+  assert.equal(await page.locator('#quote-view').isVisible(), true);
+  assert.equal(await page.locator('#import-view').isVisible(), false,
+    'a importação NÃO aparece entre as etapas do orçamento');
+  assert.match(await page.locator('#imported-note').textContent(), /peso e o tempo/);
+  await page.locator('#grams').fill('10');
+  await page.locator('#hours').fill('1');
+  await page.locator('#quote-form button[type=submit]').click();
+  await page.waitForFunction(() => !document.querySelector('#result').hidden);
+
+  // Projeto fatiado: gramas e tempo são preenchidos e revisados no orçamento.
+  await page.locator('#back-home').click();
+  await page.locator('#home-import').click();
+  assert.equal(await page.locator('#model-link').inputValue(), '', 'novo caminho começa limpo');
   const sliceInfo = [
     '<config><plate>',
     '<metadata key="index" value="1"/>',
@@ -312,19 +331,55 @@ try {
     mimeType: 'application/octet-stream',
     buffer: zipOne('Metadata/slice_info.config', sliceInfo, true)
   });
-  await page.waitForFunction(() => document.querySelector('#model-status').textContent.includes('preenchidos'));
+  await page.waitForFunction(() => document.querySelector('#model-status').textContent.includes('fatiamento carregados'));
   assert.equal(await page.locator('#grams').inputValue(), '22,75');
   assert.equal(await page.locator('#hours').inputValue(), '1');
   assert.equal(await page.locator('#minutes').inputValue(), '5');
-  assert.equal(await page.locator('#quantity').inputValue(), '2', 'quantidade não é inventada');
+  assert.equal(await page.locator('#quantity').inputValue(), '1',
+    'o importador não altera a quantidade sem certeza');
   assert.match(await page.locator('#import-info').textContent(), /PLA/);
   assert.equal(await page.locator('#piece').inputValue(), 'Suporte A1');
+  assert.equal(await page.locator('#import-continue').isVisible(), true);
+  await page.locator('#import-continue').click();
+  assert.equal(await page.locator('#quote-view').isVisible(), true);
+  assert.equal(await page.locator('#import-view').isVisible(), false);
+  assert.match(await page.locator('#imported-note').textContent(), /Projeto importado/);
   await page.locator('#quote-form button[type=submit]').click();
   await page.waitForFunction(() => !document.querySelector('#result').hidden);
   assert.match(await page.locator('#total').textContent(), /R\$/);
 
+  // Botão de novo orçamento no resultado limpa a peça, sem apagar custos/histórico.
+  assert.equal(await page.locator('#new-quote-result').isVisible(), true);
+  await page.locator('#new-quote-result').click();
+  assert.equal(await page.locator('#result').isVisible(), false);
+  assert.equal(await page.locator('#piece').inputValue(), '');
+  assert.equal(await page.locator('#grams').inputValue(), '');
+  assert.equal(await page.locator('#hours').inputValue(), '');
+  assert.equal(await page.locator('#minutes').inputValue(), '');
+  assert.equal(await page.locator('#quantity').inputValue(), '1');
+  assert.equal(await page.locator('#model-link').inputValue(), '');
+  assert.equal(await page.locator('#project-file').inputValue(), '');
+  assert.equal(await page.locator('#imported-note').isVisible(), false);
+  assert.equal(await page.locator('#import-view').isVisible(), false);
+  assert.equal(await page.locator('#history-section').isVisible(), true);
+  assert.equal(await page.locator('input[name="markup"][value="50"]').isChecked(), true);
+  assert.match(await page.locator('#new-quote-status').textContent(), /Pronto!/);
+  await page.locator('#grams').fill('10');
+  assert.equal(await page.locator('#new-quote-status').textContent(), '');
+  await page.locator('#minutes').pressSequentially('35');
+  assert.equal(await page.locator('#minutes').inputValue(), '35');
+  assert.equal(await page.locator('#hours').inputValue(), '');
+  await page.locator('#quote-form button[type=submit]').click();
+  await page.waitForFunction(() => !document.querySelector('#result').hidden);
+  assert.match(await page.locator('#total').textContent(), /R\$/,
+    'tempo só de minutos funciona');
+  await page.locator('#clear').click();
+  assert.equal(await page.locator('#minutes').inputValue(), '');
+  assert.equal(await page.locator('#result').isVisible(), false);
 
-  // Aceita G-code e rejeita um fatiamento para outra impressora.
+  // G-code e proteção contra arquivo destinado a outra máquina.
+  await page.locator('#back-home').click();
+  await page.locator('#home-import').click();
   const gcode = [
     '; model printing time: 20m; total estimated time: 2h 10m 5s',
     '; total filament weight [g] : 30.25',
@@ -339,7 +394,6 @@ try {
   assert.equal(await page.locator('#grams').inputValue(), '30,25');
   assert.equal(await page.locator('#hours').inputValue(), '2');
   assert.equal(await page.locator('#minutes').inputValue(), '11');
-
   const otherPrinter = sliceInfo.replace('Bambu Lab A1 mini', 'Bambu Lab P1S');
   await page.locator('#project-file').setInputFiles({
     name: 'Perfil_P1S.gcode.3mf',
@@ -347,45 +401,14 @@ try {
     buffer: zipOne('Metadata/slice_info.config', otherPrinter, true)
   });
   await page.waitForFunction(() => document.querySelector('#model-status').textContent.includes('não para a A1 Mini'));
-  assert.equal(await page.locator('#grams').inputValue(), '30,25', 'não substitui valores com arquivo de outra máquina');
-
-  // Um toque em Novo orçamento precisa zerar apenas o formulário atual.
-  await page.locator('#quote-form button[type=submit]').click();
-  await page.waitForFunction(() => !document.querySelector('#result').hidden);
-  assert.equal(await page.locator('#new-quote-result').isVisible(), true);
-  await page.locator('#new-quote-result').click();
-  assert.equal(await page.locator('#result').isVisible(), false, 'resultado anterior desaparece');
-  assert.equal(await page.locator('#piece').inputValue(), '', 'nome limpo');
-  assert.equal(await page.locator('#grams').inputValue(), '', 'gramas limpos');
-  assert.equal(await page.locator('#hours').inputValue(), '', 'horas limpas');
-  assert.equal(await page.locator('#minutes').inputValue(), '', 'minutos limpos');
-  assert.equal(await page.locator('#extras').inputValue(), '', 'gastos extras limpos');
-  assert.equal(await page.locator('#quantity').inputValue(), '1', 'quantidade padrão de uma peça');
-  assert.equal(await page.locator('#model-link').inputValue(), '', 'link do projeto limpo');
-  assert.equal(await page.locator('#project-file').inputValue(), '', 'arquivo selecionado limpo');
-  assert.equal(await page.locator('#project-import').getAttribute('open'), null,
-    'painel de importação fechado ao começar de novo');
-  assert.equal(await page.locator('input[name="markup"][value="50"]').isChecked(), true,
-    'lucro volta à opção inicial');
-  assert.equal(await page.locator('#history-section').isVisible(), true,
-    'histórico preservado');
-  assert.equal(await page.locator('#new-quote-status').textContent(),
-    'Pronto! Preencha os dados da próxima peça.');
-  await page.locator('#grams').fill('10');
-  assert.equal(await page.locator('#new-quote-status').textContent(), '',
-    'mensagem de novo orçamento some na digitação');
-
-  // Apenas minutos devem permitir calcular, sem inserir zero nas horas.
-  await page.locator('#minutes').pressSequentially('35');
-  assert.equal(await page.locator('#minutes').inputValue(), '35');
-  assert.equal(await page.locator('#hours').inputValue(), '');
-  await page.locator('#quote-form button[type=submit]').click();
-  await page.waitForFunction(() => !document.querySelector('#result').hidden);
-  assert.match(await page.locator('#total').textContent(), /R\$/,
-    'orçamento só com minutos calcula normalmente');
-  await page.locator('#clear').click();
-  assert.equal(await page.locator('#minutes').inputValue(), '');
-  assert.equal(await page.locator('#result').isVisible(), false);
+  assert.equal(await page.locator('#import-continue').isVisible(), false,
+    'não permite continuar com perfil de impressora incompatível');
+  assert.equal(await page.locator('#grams').inputValue(), '30,25',
+    'uma importação inválida não muda os dados anteriores');
+  await page.locator('#import-back').click();
+  await page.locator('#home-new-quote').click();
+  assert.equal(await page.locator('#grams').inputValue(), '',
+    'novo orçamento manual independe do caminho de importação');
 
   await page.setViewportSize({ width: 320, height: 650 });
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true,
