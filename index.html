@@ -26,6 +26,10 @@
 
 <section id="quote-view">
  <div class="intro"><p class="eyebrow">FAZER ORÇAMENTO</p><h1>Quanto cobrar pela peça?</h1><p>Você pode importar um projeto ou preencher os dados da impressão.</p></div>
+ <div class="new-quote-row">
+  <button id="clear" class="new-quote-button" type="button"><span class="new-quote-icon" aria-hidden="true">↻</span> Novo orçamento</button>
+  <p id="new-quote-status" class="new-quote-status" role="status" aria-live="polite"></p>
+ </div>
  <div id="first-setup" class="notice setup-notice" hidden>
   <div><strong>Primeiro acesso?</strong><p>Confira e salve os custos da sua impressora antes do primeiro orçamento.</p></div>
   <button id="setup-now" type="button" class="button-outline">Configurar custos <span aria-hidden="true">→</span></button>
@@ -58,8 +62,8 @@
   <div class="field"><label for="quantity">Quantidade de peças</label><input id="quantity" type="number" inputmode="numeric" min="1" max="100000" step="1" value="1" required></div>
   <label class="label-row" for="hours">Tempo total de impressão</label>
   <div class="time-row">
-   <div class="field"><input id="hours" type="number" inputmode="numeric" min="0" max="10000" step="1" value="0" required><label class="below" for="hours">Horas</label></div>
-   <div class="field"><input id="minutes" type="number" inputmode="numeric" min="0" max="59" step="1" value="0" required><label class="below" for="minutes">Minutos</label></div>
+   <div class="field"><input id="hours" type="number" inputmode="numeric" min="0" max="10000" step="1" placeholder="Horas" autocomplete="off"><label class="below" for="hours">Horas</label></div>
+   <div class="field"><input id="minutes" type="number" inputmode="numeric" min="0" max="59" step="1" placeholder="Minutos" autocomplete="off"><label class="below" for="minutes">Minutos</label></div>
   </div>
   <p class="hint">Use os gramas e o tempo da impressão inteira, inclusive quando houver várias peças.</p>
   </section>
@@ -96,7 +100,7 @@
   <div class="quote-actions">
   <p id="quote-error" class="error" role="alert"></p>
   <button class="button-primary main-action" type="submit">Calcular e somar tudo <span aria-hidden="true">→</span></button>
-  <button id="clear" class="clear-button" type="button">Começar outro orçamento</button>
+  
   </div>
  </form>
 
@@ -151,6 +155,7 @@
   </div>
   <p id="share-status" class="helper" role="status"></p>
   <p class="helper">O cliente recebe somente o logo, a quantidade de peças e o valor total.</p>
+  <button id="new-quote-result" class="new-quote-button new-quote-bottom" type="button"><span class="new-quote-icon" aria-hidden="true">↻</span> Fazer outro orçamento</button>
  </section>
  <section id="history-section" class="history" hidden>
    <div class="history-heading"><h2>Orçamentos anteriores</h2><button id="clear-history" class="clear-button" type="button">Apagar</button></div>
