@@ -1,4 +1,4 @@
-const cacheName = 'jh3-orcamentos-v8';
+const cacheName = 'jh3-orcamentos-v9';
 const core = ['./', './index.html', './style.css', './app.mjs', './calc.mjs', './project-import.mjs', './currency.mjs',
   './manifest.webmanifest', './logo.webp', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', event => {
