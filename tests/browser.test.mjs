@@ -40,6 +40,15 @@ try {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
+  // Registra exatamente os textos desenhados na imagem PNG do orçamento.
+  await page.addInitScript(() => {
+    window.__quoteCanvasTexts = [];
+    const draw = CanvasRenderingContext2D.prototype.fillText;
+    CanvasRenderingContext2D.prototype.fillText = function (text, ...args) {
+      window.__quoteCanvasTexts.push(String(text));
+      return draw.call(this, text, ...args);
+    };
+  });
   await page.goto('http://127.0.0.1:8765/', { waitUntil: 'networkidle' });
 
   assert.equal(await page.locator('#quote-view').isVisible(), true, 'orçamento aparece no primeiro acesso');
@@ -144,6 +153,8 @@ try {
   const price1 = await page.locator('#total').textContent();
   assert.match(price1, /R\$/, 'mostra valor em reais');
   await page.waitForFunction(() => !document.querySelector('#share').disabled, { timeout: 10000 });
+  assert.equal(await page.evaluate(() => window.__quoteCanvasTexts.includes('Chaveiro JH3')), true,
+    'o nome escolhido precisa aparecer na imagem de orçamento');
   assert.equal(await page.locator('#copy').isEnabled(), true, 'pode copiar orçamento');
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true, 'tela sem rolagem horizontal');
   await mkdir('screenshots', { recursive: true });
@@ -225,6 +236,21 @@ try {
     'percentual de lucro salvo no aparelho');
 
   
+  // Nome grande também precisa ser integralmente desenhado, sem cortes.
+  const longTitle = 'Organizador de Mesa Modular com Suporte para Celular e Porta Canetas Personalizado';
+  await page.locator('#piece').fill(longTitle);
+  await page.locator('#quote-form button[type=submit]').click();
+  await page.waitForFunction(() => !document.querySelector('#result').hidden);
+  await page.waitForFunction(() => !document.querySelector('#share').disabled, { timeout: 10000 });
+  const drawnTitle = await page.evaluate(() => {
+    const text = window.__quoteCanvasTexts;
+    const label = text.lastIndexOf('PROJETO / PEÇA');
+    const quantity = text.findIndex((x, i) => i > label && x.startsWith('Quantidade:'));
+    return text.slice(label + 1, quantity).join(' ');
+  });
+  assert.equal(drawnTitle, longTitle,
+    'todas as palavras do nome longo aparecem na imagem compartilhada');
+
   // Um link de página identifica o modelo, mas não inventa tempo ou peso.
   await page.locator('#project-import summary').click();
   await page.locator('#model-link').fill('https://makerworld.com/pt/models/123-suporte-para-celular');
