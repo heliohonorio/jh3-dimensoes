@@ -330,6 +330,8 @@ try {
   assert.equal(await page.locator('#grams').inputValue(), '30,25', 'não substitui valores com arquivo de outra máquina');
 
   // Um toque em Novo orçamento precisa zerar apenas o formulário atual.
+  await page.locator('#quote-form button[type=submit]').click();
+  await page.waitForFunction(() => !document.querySelector('#result').hidden);
   assert.equal(await page.locator('#new-quote-result').isVisible(), true);
   await page.locator('#new-quote-result').click();
   assert.equal(await page.locator('#result').isVisible(), false, 'resultado anterior desaparece');
