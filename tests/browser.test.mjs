@@ -53,6 +53,10 @@ try {
 
   assert.equal(await page.locator('#quote-view').isVisible(), true, 'orçamento aparece no primeiro acesso');
   assert.equal(await page.locator('#first-setup').isVisible(), true, 'primeiro acesso avisa sobre custos');
+  assert.equal(await page.locator('#clear').isVisible(), true, 'botão Novo orçamento visível no topo');
+  assert.equal(await page.locator('#hours').inputValue(), '', 'horas começam sem zero');
+  assert.equal(await page.locator('#minutes').inputValue(), '', 'minutos começam sem zero');
+  assert.equal(await page.locator('#grams').inputValue(), '', 'gramas começam vazios');
   assert.equal(await page.locator('nav.tabs').count(), 0,
     'barra grande de navegação foi removida');
   assert.equal(await page.locator('#tab-quote').count(), 0);
@@ -140,11 +144,18 @@ try {
   assert.equal(await page.locator('#quote-view').isVisible(), true,
     'engrenagem também retorna ao orçamento');
 
+  await page.locator('#hours').pressSequentially('2');
+  assert.equal(await page.locator('#hours').inputValue(), '2',
+    'digitar 2 nas horas não forma 02');
+  await page.locator('#minutes').pressSequentially('35');
+  assert.equal(await page.locator('#minutes').inputValue(), '35',
+    'digitar 35 nos minutos não mantém zeros anteriores');
+  await page.locator('#minutes').fill('');
   await page.locator('#piece').fill('Chaveiro JH3');
   await page.locator('#grams').fill('100');
   await page.locator('#quantity').fill('2');
   await page.locator('#hours').fill('2');
-  await page.locator('#minutes').fill('0');
+  await page.locator('#minutes').fill('');
   await page.locator('#quote-form details').filter({ hasText: 'Adicionar embalagem' }).locator('summary').click();
   await page.locator('#extras').fill('250');
   assert.equal(await page.locator('#extras').inputValue(), 'R$ 2,50');
@@ -160,9 +171,17 @@ try {
   await mkdir('screenshots', { recursive: true });
   await page.screenshot({ path: 'screenshots/mobile.png', fullPage: true });
 
+  // Um preenchimento antigo não deve reaparecer ao abrir a calculadora.
+  await page.evaluate(() => localStorage.setItem('jh3-draft-v2',
+    JSON.stringify({ piece: 'Orçamento antigo', grams: '999', hours: '0', minutes: '0' })));
   await page.reload({ waitUntil: 'networkidle' });
   assert.equal(await page.locator('#first-setup').isVisible(), false, 'custos permanecem salvos');
-  assert.equal(await page.locator('#grams').inputValue(), '100', 'rascunho também fica salvo');
+  assert.equal(await page.locator('#piece').inputValue(), '', 'não recupera nome do orçamento antigo');
+  assert.equal(await page.locator('#grams').inputValue(), '', 'não recupera gramas do orçamento antigo');
+  assert.equal(await page.locator('#hours').inputValue(), '', 'horas vazias após recarregar');
+  assert.equal(await page.locator('#minutes').inputValue(), '', 'minutos vazios após recarregar');
+  assert.equal(await page.evaluate(() => localStorage.getItem('jh3-draft-v2')), null,
+    'rascunho anterior foi descartado sem apagar custos ou histórico');
   assert.equal(await page.locator('#history-section').isVisible(), true, 'histórico disponível');
   await page.locator('#history-list button').first().click();
   await page.waitForFunction(() => !document.querySelector('#result').hidden);
@@ -309,6 +328,42 @@ try {
   });
   await page.waitForFunction(() => document.querySelector('#model-status').textContent.includes('não para a A1 Mini'));
   assert.equal(await page.locator('#grams').inputValue(), '30,25', 'não substitui valores com arquivo de outra máquina');
+
+  // Um toque em Novo orçamento precisa zerar apenas o formulário atual.
+  assert.equal(await page.locator('#new-quote-result').isVisible(), true);
+  await page.locator('#new-quote-result').click();
+  assert.equal(await page.locator('#result').isVisible(), false, 'resultado anterior desaparece');
+  assert.equal(await page.locator('#piece').inputValue(), '', 'nome limpo');
+  assert.equal(await page.locator('#grams').inputValue(), '', 'gramas limpos');
+  assert.equal(await page.locator('#hours').inputValue(), '', 'horas limpas');
+  assert.equal(await page.locator('#minutes').inputValue(), '', 'minutos limpos');
+  assert.equal(await page.locator('#extras').inputValue(), '', 'gastos extras limpos');
+  assert.equal(await page.locator('#quantity').inputValue(), '1', 'quantidade padrão de uma peça');
+  assert.equal(await page.locator('#model-link').inputValue(), '', 'link do projeto limpo');
+  assert.equal(await page.locator('#project-file').inputValue(), '', 'arquivo selecionado limpo');
+  assert.equal(await page.locator('#project-import').getAttribute('open'), null,
+    'painel de importação fechado ao começar de novo');
+  assert.equal(await page.locator('input[name="markup"][value="50"]').isChecked(), true,
+    'lucro volta à opção inicial');
+  assert.equal(await page.locator('#history-section').isVisible(), true,
+    'histórico preservado');
+  assert.equal(await page.locator('#new-quote-status').textContent(),
+    'Pronto! Preencha os dados da próxima peça.');
+  await page.locator('#grams').fill('10');
+  assert.equal(await page.locator('#new-quote-status').textContent(), '',
+    'mensagem de novo orçamento some na digitação');
+
+  // Apenas minutos devem permitir calcular, sem inserir zero nas horas.
+  await page.locator('#minutes').pressSequentially('35');
+  assert.equal(await page.locator('#minutes').inputValue(), '35');
+  assert.equal(await page.locator('#hours').inputValue(), '');
+  await page.locator('#quote-form button[type=submit]').click();
+  await page.waitForFunction(() => !document.querySelector('#result').hidden);
+  assert.match(await page.locator('#total').textContent(), /R\$/,
+    'orçamento só com minutos calcula normalmente');
+  await page.locator('#clear').click();
+  assert.equal(await page.locator('#minutes').inputValue(), '');
+  assert.equal(await page.locator('#result').isVisible(), false);
 
   await page.setViewportSize({ width: 320, height: 650 });
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true,
