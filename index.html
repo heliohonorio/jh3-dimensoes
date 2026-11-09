@@ -95,23 +95,54 @@
 
   <div class="quote-actions">
   <p id="quote-error" class="error" role="alert"></p>
-  <button class="button-primary main-action" type="submit">Calcular preço <span aria-hidden="true">→</span></button>
+  <button class="button-primary main-action" type="submit">Calcular e somar tudo <span aria-hidden="true">→</span></button>
   <button id="clear" class="clear-button" type="button">Começar outro orçamento</button>
   </div>
  </form>
 
  <section id="result" class="panel result" hidden aria-labelledby="result-title">
-  <div class="section-title"><span class="number">2</span><div><h2 id="result-title" tabindex="-1">Seu preço de venda</h2><p>Valor sugerido para cobrar do cliente.</p></div></div>
-  <p class="eyebrow">VALOR TOTAL</p>
-  <output id="total" class="price">—</output>
-  <p id="units" class="units"></p>
-  <p class="helper sale-note">O custo de produção fica igual quando você muda o lucro. O preço de venda muda conforme a porcentagem escolhida.</p>
-  <div class="values">
-   <div><span>Custo de produção</span><strong id="cost-label"></strong></div>
-   <div><span>Seu lucro estimado</span><strong id="profit-label"></strong></div>
+  <div class="section-title"><span class="number">✓</span><div><h2 id="result-title" tabindex="-1">Seu orçamento pronto</h2><p>Veja o custo da peça, seu lucro e a soma do pedido.</p></div></div>
+
+  <p class="eyebrow breakdown-eyebrow">VALORES POR PEÇA</p>
+  <div class="per-piece-grid" aria-label="Custo e lucro separados por peça">
+    <div class="piece-card piece-cost">
+      <span class="piece-card-title">Custo para produzir 1 peça</span>
+      <output id="cost-per-piece" class="piece-amount">—</output>
+      <span class="piece-card-help">Filamento, energia e outros gastos, sem lucro.</span>
+    </div>
+    <div class="piece-card piece-profit">
+      <span class="piece-card-title">Seu lucro por peça</span>
+      <output id="profit-per-piece" class="piece-amount">—</output>
+      <span class="piece-card-help" id="chosen-profit">Lucro escolhido para este pedido.</span>
+    </div>
   </div>
-  <details class="expandable"><summary><span class="summary-label"><strong>Entender este preço</strong><small>Ver custos e lucro deste orçamento</small></span><span class="expand-icon" aria-hidden="true"></span></summary>
-   <dl id="costs" class="costs"></dl><p class="helper">Valores estimados. A lista de custos não será enviada ao cliente.</p>
+  <p class="helper unit-explainer" id="unit-explainer">São médias por peça. A soma do pedido usa os valores totais para não perder centavos.</p>
+
+  <div class="sum-sheet" aria-label="Soma do custo e do lucro">
+    <h3>Somando tudo</h3>
+    <p class="sum-intro" id="sum-quantity">Resumo do pedido inteiro</p>
+    <div class="sum-line">
+      <span>Custo de produção</span>
+      <strong id="cost-label">—</strong>
+    </div>
+    <div class="sum-line">
+      <span><span aria-hidden="true" class="sum-plus">+</span> Seu lucro</span>
+      <strong id="profit-label">—</strong>
+    </div>
+    <div class="sum-line" id="fees-line" hidden>
+      <span><span aria-hidden="true" class="sum-plus">+</span> Taxas da venda</span>
+      <strong id="fees-label">—</strong>
+    </div>
+    <div class="sum-total">
+      <p class="eyebrow">TOTAL PARA COBRAR DO CLIENTE</p>
+      <output id="total" class="price" aria-live="polite">—</output>
+      <p id="units" class="units"></p>
+    </div>
+    <p class="helper sum-note">O custo da impressão não muda quando você escolhe outro lucro. Só muda o preço que será cobrado.</p>
+  </div>
+
+  <details class="expandable result-details"><summary><span class="summary-label"><strong>Ver os gastos da impressão</strong><small>Filamento, energia, desgaste e demais custos</small></span><span class="expand-icon" aria-hidden="true"></span></summary>
+   <dl id="costs" class="costs"></dl><p class="helper">Esses custos e seu lucro não aparecem no orçamento enviado ao cliente.</p>
   </details>
   <button id="share" class="button-primary main-action" type="button" disabled>Compartilhar com o cliente</button>
   <div class="two-actions">
@@ -119,7 +150,7 @@
    <button id="download" class="button-outline" type="button" disabled>Salvar imagem</button>
   </div>
   <p id="share-status" class="helper" role="status"></p>
-  <p class="helper">O cliente vê somente o nome da peça, a quantidade e o preço.</p>
+  <p class="helper">O cliente vê somente o nome da peça, a quantidade e o preço de venda.</p>
  </section>
  <section id="history-section" class="history" hidden>
    <div class="history-heading"><h2>Orçamentos anteriores</h2><button id="clear-history" class="clear-button" type="button">Apagar</button></div>
