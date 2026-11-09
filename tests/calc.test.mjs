@@ -129,3 +129,38 @@ test('interpreta porcentagens grandes no formato brasileiro', () => {
     grams: 100, quantity: 1, hours: 1, minutes: 0, markup: Infinity
   }));
 });
+
+
+test('mesmos dados mantêm custo fixo ao trocar de 50% para 100%', () => {
+  const settings = {
+    ...defaultSettings, rollPrice: 1000, rollGrams: 1000,
+    tariff: 0, watts: 0, wear: 0, waste: 0, failure: 0,
+    laborHourly: 0, minPrice: 0, fee: 0
+  };
+  const job = { grams: 27.28, quantity: 3, hours: 1, minutes: 0 };
+  const half = calculate(settings, { ...job, markup: 50 });
+  const double = calculate(settings, { ...job, markup: 100 });
+  assert.equal(half.cost, 27.28);
+  assert.equal(double.cost, 27.28);
+  assert.equal(half.profit, 13.64);
+  assert.equal(double.profit, 27.28);
+  assert.equal(half.price, 40.92);
+  assert.equal(double.price, 54.56);
+  // O unitário é a média exata: arredondar 18,1866 para 18,19
+  // pode gerar diferença de um centavo se multiplicado por três.
+  assert.ok(Math.abs(double.unit - 54.56 / 3) < 1e-9);
+});
+
+test('taxas de venda não alteram o custo de produção quando lucro muda', () => {
+  const settings = {
+    ...defaultSettings, rollPrice: 1000, rollGrams: 1000,
+    tariff: 0, watts: 0, wear: 0, waste: 0, failure: 0,
+    laborHourly: 0, minPrice: 0, fee: 10
+  };
+  const job = { grams: 27.28, quantity: 3, hours: 1, minutes: 0 };
+  const half = calculate(settings, { ...job, markup: 50 });
+  const double = calculate(settings, { ...job, markup: 100 });
+  assert.equal(half.cost, double.cost);
+  assert.ok(double.fees > half.fees, 'taxa de venda cresce com o preço');
+  assert.ok(double.price > half.price, 'preço de venda cresce com lucro');
+});
