@@ -6,7 +6,6 @@ const $ = id => document.getElementById(id);
 const formatMoney = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 const formatDate = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' });
 const keys = Object.keys(defaultSettings).filter(key => key !== 'margin');
-const draftIds = ['piece', 'grams', 'quantity', 'hours', 'minutes', 'extras', 'laborMinutes', 'model-link', 'markup-custom'];
 const settingsKey = 'jh3-preferences-v2';
 const oldSettingsKey = 'jh3-preferences-v1';
 const draftKey = 'jh3-draft-v2';
@@ -31,6 +30,8 @@ function storeSet(key, value) {
 function storeRemove(key) {
   try { localStorage.removeItem(key); } catch {}
 }
+// A cada abertura, começar com um orçamento vazio. Custos e histórico são mantidos.
+storeRemove(draftKey);
 
 function validSettings(candidate) {
   if (!candidate || typeof candidate !== 'object') return null;
@@ -140,52 +141,32 @@ function setChosenMarkup(mode, custom) {
   if (custom !== undefined && custom !== null) $('markup-custom').value = String(custom);
   updateCustomMarkup();
 }
-function getDraft() {
-  return { ...Object.fromEntries(draftIds.map(key => [key, $(key).value])), markup: chosenMarkup() };
-}
-function saveDraft() { storeSet(draftKey, getDraft()); }
-function restoreDraft() {
-  const draft = storeGet(draftKey);
-  if (draft && typeof draft === 'object') {
-    for (const key of draftIds) {
-      if (typeof draft[key] === 'string') {
-        $(key).value = $(key).matches('[data-currency]') && draft[key].trim()
-          ? formatCurrency(decimal(draft[key]))
-          : draft[key];
-      }
-    }
-    setChosenMarkup(draft.markup, draft['markup-custom']);
-  } else {
-    setChosenMarkup('50');
-  }
-}
-restoreDraft();
+// A seleção inicia em 50%; ela só muda quando o usuário escolhe outra opção.
+setChosenMarkup('50');
 document.querySelectorAll('input[name="markup"]').forEach(radio => {
   radio.addEventListener('change', () => {
     updateCustomMarkup();
     if (current) invalidateQuote();
-    saveDraft();
     if (chosenMarkup() === 'custom') $('markup-custom').focus();
   });
 });
 $('markup-custom').addEventListener('input', () => {
   if (current) invalidateQuote();
-  saveDraft();
 });
 
 function getJob() {
   return {
     grams: decimal($('grams').value),
     quantity: decimal($('quantity').value),
-    hours: decimal($('hours').value),
-    minutes: decimal($('minutes').value),
+    hours: decimal($('hours').value.trim() || '0'),
+    minutes: decimal($('minutes').value.trim() || '0'),
     extras: decimal($('extras').value.trim() || '0'),
     laborMinutes: decimal($('laborMinutes').value.trim() || '0'),
     markup: chosenMarkup() === 'custom' ? parsePercentage($('markup-custom').value) : Number(chosenMarkup())
   };
 }
 $('quote-form').addEventListener('input', event => {
-  saveDraft();
+  $('new-quote-status').textContent = '';
   if (current && event.target.id !== 'model-link') invalidateQuote();
   event.target.removeAttribute('aria-invalid');
   if (event.target.id === 'model-link') {
@@ -223,7 +204,6 @@ function applyImportedProject(data) {
   $('import-info').hidden = false;
   $('model-status').textContent = 'Dados de fatiamento preenchidos. Confira as informações antes de calcular.';
   if (current) invalidateQuote();
-  saveDraft();
 }
 
 $('project-file').addEventListener('change', async () => {
@@ -277,7 +257,6 @@ $('identify').addEventListener('click', async () => {
       'Projeto identificado pelo link. Essa página não fornece peso e tempo para a A1 Mini. ' +
       'Baixe o projeto, fatie no Bambu Studio e escolha o arquivo .gcode.3mf aqui para preencher automaticamente.';
     if (current) invalidateQuote();
-    saveDraft();
   } catch (error) {
     $('model-status').textContent = error.message || 'Não foi possível importar esse endereço.';
   } finally {
@@ -353,7 +332,6 @@ function renderHistory() {
         const known = [25, 50, 75, 100, 150].includes(item.markup);
         setChosenMarkup(known ? item.markup : 'custom', known ? undefined : item.markup);
       }
-      saveDraft();
       switchView('quote');
       $('quote-form').requestSubmit();
     });
@@ -439,7 +417,6 @@ $('quote-form').addEventListener('submit', event => {
     ? 'Valores separados para facilitar a conferência do custo e do lucro.'
     : 'Total = (custo de 1 peça + lucro de 1 peça) × quantidade.';
   showCosts(result, amounts);
-  saveDraft();
   saveHistory(result, job);
   $('copy').disabled = false;
   $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -457,26 +434,28 @@ $('quote-form').addEventListener('submit', event => {
   });
 });
 
-$('clear').addEventListener('click', () => {
+function startNewQuote() {
   $('quote-form').reset();
-  $('piece').value = '';
-  $('grams').value = '';
-  $('hours').value = '0';
-  $('minutes').value = '0';
+  for (const id of ['piece', 'grams', 'hours', 'minutes', 'extras', 'laborMinutes',
+                    'model-link', 'markup-custom', 'project-file']) {
+    $(id).value = '';
+    $(id).removeAttribute('aria-invalid');
+  }
   $('quantity').value = '1';
-  $('extras').value = '';
-  $('laborMinutes').value = '';
-  $('model-link').value = '';
-  $('project-file').value = '';
+  setChosenMarkup('50', '');
+  $('quote-form').querySelectorAll('details').forEach(section => { section.open = false; });
   $('import-info').hidden = true;
   $('import-info').textContent = '';
-  setChosenMarkup('50', '');
   $('model-page').hidden = true;
   $('model-status').textContent = '';
   storeRemove(draftKey);
   invalidateQuote();
-  $('grams').focus();
-});
+  $('new-quote-status').textContent = 'Pronto! Preencha os dados da próxima peça.';
+  if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+  $('quote-view').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+$('clear').addEventListener('click', startNewQuote);
+$('new-quote-result').addEventListener('click', startNewQuote);
 
 function messageFor(result) {
   return [
