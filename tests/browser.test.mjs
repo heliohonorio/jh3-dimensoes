@@ -249,12 +249,18 @@ try {
   const price2500 = parsePrice(await page.locator('#total').textContent());
   assert.ok(price2500 > price1000, '2.500,50% também é aceito');
   await page.reload({ waitUntil: 'networkidle' });
-  assert.equal(await page.locator('input[name="markup"][value="custom"]').isChecked(), true,
-    'opção de lucro é preservada no rascunho');
-  assert.equal(await page.locator('#markup-custom').inputValue(), '2.500,50',
-    'percentual de lucro salvo no aparelho');
+  assert.equal(await page.locator('input[name="markup"][value="50"]').isChecked(), true,
+    'cada abertura começa com a opção padrão de lucro');
+  assert.equal(await page.locator('#markup-custom').inputValue(), '',
+    'percentual personalizado anterior não reaparece');
+  assert.equal(await page.locator('#grams').inputValue(), '',
+    'o orçamento anterior não reaparece');
+  assert.equal(await page.locator('#hours').inputValue(), '',
+    'horas continuam vazias após reabrir');
+  await page.locator('#grams').fill('100');
+  await page.locator('#hours').fill('2');
+  await page.locator('#quantity').fill('2');
 
-  
   // Nome grande também precisa ser integralmente desenhado, sem cortes.
   const longTitle = 'Organizador de Mesa Modular com Suporte para Celular e Porta Canetas Personalizado';
   await page.locator('#piece').fill(longTitle);
