@@ -184,8 +184,21 @@ try {
   assert.ok(price150 > price100, '150% custa mais que 100%');
   assert.equal(cost150, cost100, 'o custo real não muda com a porcentagem de lucro');
   assert.match(await page.locator('#units').textContent(), /por peça/, 'preço unitário descrito como preço de venda');
-  assert.match(await page.locator('.sale-note').textContent(), /custo de produção fica igual/,
+  assert.match(await page.locator('.sum-note').textContent(), /custo da impressão não muda/,
     'explicação sobre custo fixo e lucro visível');
+  assert.equal(await page.locator('#cost-per-piece').isVisible(), true,
+    'custo individual fica separado');
+  assert.equal(await page.locator('#profit-per-piece').isVisible(), true,
+    'lucro individual fica separado');
+  assert.equal(await page.locator('#sum-quantity').textContent(), 'Soma para as 2 peças');
+  const sumCents = text => Math.round(parsePrice(text) * 100);
+  const totalShown = sumCents(await page.locator('#total').textContent());
+  const costShown = sumCents(await page.locator('#cost-label').textContent());
+  const profitShown = sumCents(await page.locator('#profit-label').textContent());
+  const feeShown = await page.locator('#fees-line').isVisible()
+    ? sumCents(await page.locator('#fees-label').textContent()) : 0;
+  assert.equal(costShown + profitShown + feeShown, totalShown,
+    'custo + lucro + taxas é exatamente o total mostrado');
   await page.locator('label.profit-choice:has(input[value="custom"])').click();
   assert.equal(await page.locator('#custom-markup').isVisible(), true);
   await page.locator('#markup-custom').fill('85');
