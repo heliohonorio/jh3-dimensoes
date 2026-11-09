@@ -104,7 +104,9 @@ input[aria-invalid=true]{border-color:#ffb19b}
 .history-heading h2{font-size:1.07rem}
 .history-heading button{margin:0}
 .history-item{background:#121e2b;border:1px solid var(--border);border-radius:12px;padding:11px 13px;display:flex;align-items:center;justify-content:space-between;gap:9px;margin:10px 0}
-.history-item strong{display:block;font-size:.91rem;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.history-item>div{min-width:0;flex:1 1 0}
+.history-item strong{display:block;font-size:.91rem;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.history-item button{flex-shrink:0}
 .history-item small{display:block;font-size:.75rem;color:var(--muted);margin-top:5px}
 .history-item button{padding:7px 9px;font-size:.78rem;min-height:43px}
 #settings-view .intro{padding-bottom:18px}
