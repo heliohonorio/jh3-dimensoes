@@ -87,7 +87,8 @@ input[aria-invalid=true]{border-color:#ffb19b}
 .result{margin-top:18px;scroll-margin-top:calc(86px + env(safe-area-inset-top, 0px))}
 .result .section-title{margin-bottom:24px}
 .price{font-size:clamp(2.7rem,8vw,3.65rem);font-weight:860;line-height:1.15;letter-spacing:-.04em;color:var(--cyan);display:block;overflow-wrap:anywhere}
-.units{margin:10px 0 22px;color:var(--muted)}
+.units{margin:10px 0 12px;color:var(--muted)}
+.sale-note{margin:0 0 19px;color:#b7d9e7;font-size:.83rem;line-height:1.52}
 .values{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:18px}
 .values>div{background:#0d1927;border:1px solid #2d4154;border-radius:12px;padding:13px 10px}
 .values span{display:block;font-size:.72rem;color:#b6c7d5;line-height:1.4}
