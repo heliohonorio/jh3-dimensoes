@@ -65,14 +65,13 @@ function switchView(view) {
   const showQuote = view === 'quote';
   $('quote-view').hidden = !showQuote;
   $('settings-view').hidden = showQuote;
-  $('tab-quote').classList.toggle('active', showQuote);
   $('tab-settings').classList.toggle('active', !showQuote);
-  $('tab-quote').setAttribute('aria-selected', String(showQuote));
-  $('tab-settings').setAttribute('aria-selected', String(!showQuote));
+  $('tab-settings').setAttribute('aria-expanded', String(!showQuote));
   window.scrollTo({ top: 0, behavior: 'auto' });
 }
-$('tab-quote').addEventListener('click', () => switchView('quote'));
-$('tab-settings').addEventListener('click', () => switchView('settings'));
+// Custos ficam acessíveis pela engrenagem discreta do cabeçalho.
+$('tab-settings').addEventListener('click', () =>
+  switchView($('settings-view').hidden ? 'settings' : 'quote'));
 $('setup-now').addEventListener('click', () => { isReturningFromSettings = true; switchView('settings'); });
 $('back-quote').addEventListener('click', () => switchView('quote'));
 
