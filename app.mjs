@@ -418,9 +418,13 @@ $('quote-form').addEventListener('submit', event => {
   current = result;
   $('result').hidden = false;
   $('total').textContent = formatMoney.format(result.price);
+  const roundedUnitCents = Math.round(result.unit * 100);
+  const totalCents = Math.round(result.price * 100);
+  const unitIsApproximate = roundedUnitCents * result.quantity !== totalCents;
   $('units').textContent = result.quantity === 1
-    ? '1 peça · valor total'
-    : result.quantity + ' peças · ' + formatMoney.format(result.unit) + ' cada';
+    ? '1 peça · preço de venda'
+    : result.quantity + ' peças · ' + (unitIsApproximate ? 'média de ' : '') +
+      formatMoney.format(result.unit) + ' por peça' + (unitIsApproximate ? ' (arredondado)' : '');
   $('cost-label').textContent = formatMoney.format(result.cost + result.fees);
   $('profit-label').textContent = formatMoney.format(result.profit);
   showCosts(result);
@@ -469,7 +473,8 @@ function messageFor(result) {
     'Peça: ' + result.name,
     'Quantidade: ' + result.quantity + (result.quantity === 1 ? ' peça' : ' peças'),
     'Valor total: ' + formatMoney.format(result.price),
-    ...(result.quantity > 1 ? ['Valor por peça: ' + formatMoney.format(result.unit)] : []),
+    ...(result.quantity > 1 ? ['Preço médio de venda por peça: ' +
+      formatMoney.format(result.unit) + ' (valor arredondado)'] : []),
     '', 'Prazo e entrega: a combinar.',
     'JH3 Dimensões · A peça que faltava no seu dia a dia.'
   ].join('\n');
@@ -553,7 +558,7 @@ async function buildImage(result) {
   if (result.quantity > 1) {
     ctx.fillStyle = '#d7e4e9';
     ctx.font = '30px system-ui';
-    ctx.fillText(formatMoney.format(result.unit) + ' por peça', 540, 1055);
+    ctx.fillText('Média: ' + formatMoney.format(result.unit) + ' por peça', 540, 1055);
   }
   ctx.fillStyle = '#b6cad5';
   ctx.font = '26px system-ui';
