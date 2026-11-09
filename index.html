@@ -22,23 +22,26 @@
  </div>
 </header>
 <main>
+<section id="home-view" class="home-view" aria-label="Escolher como começar">
+  <div class="home-buttons">
+    <button id="home-import" class="home-tile home-tile-import" type="button">
+      <span class="home-tile-icon" aria-hidden="true">↥</span>
+      <span class="home-tile-copy"><strong>Importar projeto</strong><small>Arquivo ou link do MakerWorld e outros sites</small></span>
+      <span class="home-tile-arrow" aria-hidden="true">›</span>
+    </button>
+    <button id="home-new-quote" class="home-tile home-tile-new" type="button">
+      <span class="home-tile-icon" aria-hidden="true">＋</span>
+      <span class="home-tile-copy"><strong>Novo orçamento</strong><small>Preencher os dados manualmente</small></span>
+      <span class="home-tile-arrow" aria-hidden="true">›</span>
+    </button>
+  </div>
+</section>
 
-
-<section id="quote-view">
- <div class="intro"><p class="eyebrow">FAZER ORÇAMENTO</p><h1>Quanto cobrar pela peça?</h1><p>Você pode importar um projeto ou preencher os dados da impressão.</p></div>
- <div class="new-quote-row">
-  <button id="clear" class="new-quote-button" type="button"><span class="new-quote-icon" aria-hidden="true">↻</span> Novo orçamento</button>
-  <p id="new-quote-status" class="new-quote-status" role="status" aria-live="polite"></p>
- </div>
- <div id="first-setup" class="notice setup-notice" hidden>
-  <div><strong>Primeiro acesso?</strong><p>Confira e salve os custos da sua impressora antes do primeiro orçamento.</p></div>
-  <button id="setup-now" type="button" class="button-outline">Configurar custos <span aria-hidden="true">→</span></button>
- </div>
-
- <form id="quote-form" class="quote-sections" novalidate>
+<section id="import-view" class="import-screen" hidden aria-label="Importar projeto">
+  <button id="import-back" class="back-home" type="button">‹ Voltar ao início</button>
   <section class="stage-card stage-import" aria-labelledby="step-import">
-    <div class="section-title"><span class="number">1</span><div><h2 id="step-import">Já tem um projeto?</h2><p>Importe o arquivo ou cole um link para começar mais rápido.</p></div></div>
-  <details class="expandable project-import" id="project-import">
+    <div class="section-title"><span class="number">1</span><div><h2 id="step-import">Importar projeto</h2><p>Escolha um arquivo ou cole o link de um projeto.</p></div></div>
+  <details class="expandable project-import" id="project-import" open>
     <summary><span class="import-symbol" aria-hidden="true">↥</span><span class="summary-label"><strong>IMPORTAR PROJETO OU ARQUIVO</strong><small>MakerWorld, outros sites ou arquivo do celular</small></span><span class="expand-icon" aria-hidden="true"></span></summary>
     <div class="import-body">
       <p class="helper import-lead">Use uma destas opções. Se houver dados da impressão, eles serão preenchidos automaticamente.</p>
@@ -54,9 +57,24 @@
     </div>
   </details>
   </section>
+  <button id="import-continue" class="button-primary import-continue" type="button" hidden>Continuar com este projeto <span aria-hidden="true">→</span></button>
+</section>
 
+<section id="quote-view" hidden>
+  <button id="back-home" class="back-home" type="button">‹ Voltar ao início</button>
+  <div class="intro"><p class="eyebrow">NOVO ORÇAMENTO</p><h1>Dados da impressão</h1><p>Preencha as informações da peça e escolha quanto deseja ganhar.</p></div>
+  <div id="imported-note" class="imported-note" hidden role="status"></div>
+  <div class="new-quote-row">
+    <button id="clear" class="new-quote-button" type="button"><span class="new-quote-icon" aria-hidden="true">↻</span> Limpar dados</button>
+    <p id="new-quote-status" class="new-quote-status" role="status" aria-live="polite"></p>
+  </div>
+  <div id="first-setup" class="notice setup-notice" hidden>
+    <div><strong>Primeiro acesso?</strong><p>Confira e salve os custos da sua impressora antes do primeiro orçamento.</p></div>
+    <button id="setup-now" type="button" class="button-outline">Configurar custos <span aria-hidden="true">→</span></button>
+  </div>
+  <form id="quote-form" class="quote-sections" novalidate>
   <section class="stage-card stage-details" aria-labelledby="step-details">
-    <div class="section-title"><span class="number">2</span><div><h2 id="step-details">Dados da peça</h2><p>Informe o que será produzido.</p></div></div>
+    <div class="section-title"><span class="number">1</span><div><h2 id="step-details">Dados da peça</h2><p>Informe o que será produzido.</p></div></div>
     <div class="field"><label for="piece">Nome da peça <span class="optional-label">opcional</span></label><input id="piece" maxlength="90" autocomplete="off" placeholder="Ex.: Chaveiro com nome"></div>
   <div class="field"><label for="grams">Filamento usado <span class="unit">gramas</span></label><input id="grams" inputmode="decimal" autocomplete="off" placeholder="Ex.: 45,5" required><p class="helper">Peso total mostrado no Bambu Studio.</p></div>
   <div class="field"><label for="quantity">Quantidade de peças</label><input id="quantity" type="number" inputmode="numeric" min="1" max="100000" step="1" value="1" required></div>
@@ -69,7 +87,7 @@
   </section>
 
   <section class="stage-card stage-extras" aria-labelledby="step-extras">
-    <div class="section-title"><span class="number">3</span><div><h2 id="step-extras">Outros gastos</h2><p>Embalagem ou trabalho feito à mão, se houver.</p></div></div>
+    <div class="section-title"><span class="number">2</span><div><h2 id="step-extras">Outros gastos</h2><p>Embalagem ou trabalho feito à mão, se houver.</p></div></div>
   <details class="expandable">
     <summary><span class="summary-label"><strong>Adicionar embalagem ou acabamento</strong><small>Toque para informar, se precisar</small></span><span class="expand-icon" aria-hidden="true"></span></summary>
     <div class="field"><label for="extras">Quanto gastou além do filamento? <span class="unit">R$</span></label><input id="extras" data-currency inputmode="numeric" placeholder="R$ 0,00"><p class="helper">Ex.: embalagem, cola, argola ou entrega.</p></div>
@@ -78,7 +96,7 @@
   </section>
 
   <section class="stage-card stage-profit" aria-labelledby="step-profit">
-    <div class="section-title"><span class="number">4</span><div><h2 id="step-profit">Escolha seu lucro</h2><p>Quanto quer ganhar acima do custo desta impressão?</p></div></div>
+    <div class="section-title"><span class="number">3</span><div><h2 id="step-profit">Escolha seu lucro</h2><p>Quanto quer ganhar acima do custo desta impressão?</p></div></div>
   <fieldset class="profit-fieldset" aria-describedby="profit-help">
     <legend>Selecione uma porcentagem</legend>
     <div class="profit-grid" role="radiogroup" aria-label="Acréscimo de lucro sobre o custo">
@@ -196,7 +214,7 @@
   <div class="quote-actions">
     <p id="settings-error" class="error" role="alert"></p>
     <button class="button-primary main-action" type="submit">Salvar meus custos <span aria-hidden="true">✓</span></button>
-    <button id="back-quote" class="clear-button" type="button">Voltar ao orçamento</button>
+    <button id="back-quote" class="clear-button" type="button">Voltar</button>
   </div>
  </form>
 </section>
