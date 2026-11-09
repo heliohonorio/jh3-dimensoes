@@ -210,7 +210,11 @@ function applyImportedProject(data) {
     'Confira a quantidade de peças antes de calcular.'
   ].filter(Boolean).join('\n');
   $('import-info').hidden = false;
-  $('model-status').textContent = 'Dados de fatiamento preenchidos. Confira as informações antes de calcular.';
+  $('model-status').textContent = 'Dados de fatiamento carregados. Continue para conferir a quantidade e calcular.';
+  $('import-continue').hidden = false;
+  $('imported-note').hidden = false;
+  $('imported-note').textContent =
+    'Projeto importado: peso e tempo preenchidos. Confira a quantidade de peças antes de calcular.';
   if (current) invalidateQuote();
 }
 
@@ -219,6 +223,7 @@ $('project-file').addEventListener('change', async () => {
   if (!file) return;
   $('model-status').textContent = 'Lendo o arquivo selecionado...';
   $('import-info').hidden = true;
+  $('import-continue').hidden = true;
   try {
     const result = await inspectProjectFile(file);
     applyImportedProject(result);
@@ -231,6 +236,7 @@ $('identify').addEventListener('click', async () => {
   const button = $('identify');
   const url = $('model-link').value.trim();
   $('import-info').hidden = true;
+  $('import-continue').hidden = true;
   $('model-page').hidden = true;
   if (!url) {
     $('model-status').textContent = 'Cole o endereço do projeto ou escolha o arquivo fatiado.';
@@ -258,7 +264,17 @@ $('identify').addEventListener('click', async () => {
         .replace(/[-_]+/g, ' ').trim();
       if (readable.length > 4 && /[a-zA-ZÀ-ÿ]/.test(readable)) name = readable;
     }
-    if (name) $('piece').value = name.slice(0, 90);
+    if (name) {
+      $('piece').value = name.slice(0, 90);
+      // Um link público sem fatiamento não oferece gramas ou tempo confiáveis.
+      $('grams').value = '';
+      $('hours').value = '';
+      $('minutes').value = '';
+      $('import-continue').hidden = false;
+      $('imported-note').hidden = false;
+      $('imported-note').textContent =
+        'Nome importado pelo link. Preencha o peso e o tempo da impressão antes de calcular.';
+    }
     $('model-page').href = parsed.href;
     $('model-page').hidden = false;
     $('model-status').textContent =
