@@ -14,12 +14,8 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .brand strong{display:block;font-size:1rem;letter-spacing:.02em;white-space:nowrap}
 .brand strong span{color:var(--cyan)}
 .brand small{display:block;color:var(--muted);font-size:.74rem;margin-top:1px}
-.header-tag{color:#9db7c7;border:1px solid #354756;border-radius:99px;padding:5px 10px;font-size:.72rem;white-space:nowrap}
 main{max-width:700px;padding:0 17px 50px;margin:0 auto}
-.tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;position:sticky;top:0;z-index:3;padding:14px 0;background:#0b1018e8;backdrop-filter:blur(12px);border-bottom:1px solid #253545}
-.tab{background:#152233;color:#d6e5ec;border:1px solid #33495b;border-radius:13px;padding:12px 8px;min-height:51px;font-weight:700;font-size:.94rem;display:flex;justify-content:center;align-items:center;gap:8px}
-.tab.active{background:#1f4658;border-color:#6bdcf2;color:#f7fdff}
-.tab:active,.button-primary:active,.button-outline:active{transform:translateY(1px)}
+.button-primary:active,.button-outline:active{transform:translateY(1px)}
 .intro{padding:25px 2px 21px}
 .eyebrow{color:var(--cyan);font-size:.69rem;font-weight:850;letter-spacing:.14em;margin:0 0 10px}
 h1,h2,p{margin-top:0}
@@ -101,7 +97,6 @@ footer{text-align:center;padding:36px 3px 0;color:#94abba;font-size:.8rem}
  .brand img{height:43px;width:43px}
  .brand strong{font-size:.91rem}
  .brand small{font-size:.68rem}
- .header-tag{font-size:.65rem;padding:4px 8px}
  h1{font-size:2.05rem}
  .intro{padding:21px 3px 19px}
 }
@@ -266,3 +261,16 @@ footer{text-align:center;padding:36px 3px 0;color:#94abba;font-size:.8rem}
   .stage-profit .profit-fieldset{margin:0}
 }
 @media(prefers-reduced-motion:reduce){.expandable .expand-icon::before{transition:none}}
+
+/* Ajustes de custos: disponíveis, mas fora do fluxo diário de orçamento. */
+.settings-gear{
+  flex:0 0 44px;display:grid;place-items:center;
+  width:44px;height:44px;border-radius:12px;
+  background:#15212d;border:1px solid #2c3d4d;
+  color:#98acba;font-size:1.5rem;line-height:1;
+  padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent;
+}
+.settings-gear:hover,.settings-gear.active{
+  color:#d7e7f0;background:#1b2b38;border-color:#4d6577;
+}
+.settings-gear:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
