@@ -44,9 +44,32 @@ try {
 
   assert.equal(await page.locator('#quote-view').isVisible(), true, 'orçamento aparece no primeiro acesso');
   assert.equal(await page.locator('#first-setup').isVisible(), true, 'primeiro acesso avisa sobre custos');
+  assert.equal(await page.locator('#quote-form .stage-card').count(), 4,
+    'orçamento dividido em quatro áreas visíveis');
+  assert.equal(await page.locator('#step-import').textContent(), 'Já tem um projeto?');
+  assert.equal(await page.locator('#step-details').textContent(), 'Dados da peça');
+  assert.equal(await page.locator('#step-profit').textContent(), 'Escolha seu lucro');
+  const importSummary = page.locator('#project-import > summary');
+  assert.equal(await importSummary.evaluate(node => getComputedStyle(node).backgroundColor),
+    'rgb(47, 184, 121)', 'importação recebe destaque verde');
+  assert.ok(await importSummary.evaluate(node => node.getBoundingClientRect().height >= 70),
+    'importação tem área ampla de toque');
+  await importSummary.click();
+  assert.equal(await page.locator('#project-import').getAttribute('open'), '',
+    'toque abre a área de importação');
+  await importSummary.click();
+  assert.equal(await page.locator('#project-import').getAttribute('open'), null,
+    'novo toque fecha a área de importação');
+  assert.ok(await importSummary.locator('.expand-icon').evaluate(node =>
+    node.getBoundingClientRect().width >= 32), 'seta maior e visível');
+
   assert.equal(await page.locator('dialog').count(), 0, 'sem modais nem rolagem dentro de pop-up');
   await page.locator('#setup-now').click();
   assert.equal(await page.locator('#settings-view').isVisible(), true, 'custos abrem em tela normal');
+  assert.equal(await page.locator('#settings-form .stage-card').count(), 4,
+    'custos divididos em quatro áreas claras');
+  assert.equal(await page.locator('#cost-filament').textContent(), 'Seu filamento');
+  assert.equal(await page.locator('#cost-energy').textContent(), 'Conta de luz');
   assert.equal(await page.locator('#quote-view').isVisible(), false);
   assert.equal(await page.locator('#tariff').inputValue(), 'R$ 0,96');
   assert.equal(await page.locator('#watts').inputValue(), '84');
