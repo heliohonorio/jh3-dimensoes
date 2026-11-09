@@ -175,11 +175,17 @@ try {
   await page.locator('#quote-form button[type=submit]').click();
   await page.waitForFunction(() => !document.querySelector('#result').hidden);
   const price100 = parsePrice(await page.locator('#total').textContent());
+  const cost100 = await page.locator('#cost-label').textContent();
   await page.locator('label.profit-choice:has(input[value="150"])').click();
   await page.locator('#quote-form button[type=submit]').click();
   await page.waitForFunction(() => !document.querySelector('#result').hidden);
   const price150 = parsePrice(await page.locator('#total').textContent());
+  const cost150 = await page.locator('#cost-label').textContent();
   assert.ok(price150 > price100, '150% custa mais que 100%');
+  assert.equal(cost150, cost100, 'o custo real não muda com a porcentagem de lucro');
+  assert.match(await page.locator('#units').textContent(), /por peça/, 'preço unitário descrito como preço de venda');
+  assert.match(await page.locator('.sale-note').textContent(), /custo de produção fica igual/,
+    'explicação sobre custo fixo e lucro visível');
   await page.locator('label.profit-choice:has(input[value="custom"])').click();
   assert.equal(await page.locator('#custom-markup').isVisible(), true);
   await page.locator('#markup-custom').fill('85');
