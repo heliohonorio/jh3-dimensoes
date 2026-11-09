@@ -11,11 +11,14 @@ Abra a guia **Meus custos** e revise os valores da empresa: rolo, energia, desga
 1. Opcionalmente, abra **Importar projeto** e escolha um arquivo **.gcode.3mf** ou **.gcode** já fatiado no Bambu Studio/Orca. Peso, tempo, material, impressora e placas são extraídos quando constam do arquivo. O usuário deve conferir a quantidade de peças.
 2. Ou informe os gramas, o tempo e a quantidade manualmente.
 3. Selecione **um lucro desejado** por orçamento: **25%, 50%, 75%, 100%, 150% ou Personalizado**.
-4. Calcule o preço, confira o resultado e compartilhe com o cliente.
+4. Toque em **Calcular e somar tudo**. O resultado separa o custo médio para produzir cada peça, o lucro médio por peça e, abaixo, a soma do custo do pedido + lucro + eventuais taxas = total de venda.
+5. Confira a soma e compartilhe o orçamento com o cliente.
 
 **O lucro é um acréscimo sobre o custo, não uma margem sobre o preço de venda.** O campo Personalizado não tem teto percentual predefinido: aceita 1.000%, 2.500%, 10.000% e outros percentuais que possam ser calculados com segurança. Fórmula: preço = custo × (1 + percentual ÷ 100) ÷ (1 − taxa ÷ 100). Exemplo sem taxas: custo R$ 10,00 + 100% = venda R$ 20,00; + 1.000% = R$ 110,00; + 2.500% = R$ 260,00. Com taxas, o cálculo preserva o acréscimo escolhido sobre o custo. O preço mínimo opcional também continua válido.
 
 O cálculo também considera filamento, perda adicional, eletricidade, desgaste, reserva de falhas, acabamento e demais custos informados.
+
+O custo de produção é calculado para **a impressão inteira** e dividido pela quantidade apenas para mostrar a média por peça. O lucro é calculado sobre esse custo, separadamente. Na soma final, os componentes são apresentados em centavos e ajustados apenas na exibição para sempre fechar exatamente o valor total. Médias por peça podem ter um centavo de diferença ao serem multiplicadas devido ao arredondamento; o total do pedido é a referência.
 
 ## MakerWorld e outros sites
 
