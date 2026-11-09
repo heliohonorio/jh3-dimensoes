@@ -425,7 +425,7 @@ $('quote-form').addEventListener('submit', event => {
     ? '1 peça · preço de venda'
     : result.quantity + ' peças · ' + (unitIsApproximate ? 'média de ' : '') +
       formatMoney.format(result.unit) + ' por peça' + (unitIsApproximate ? ' (arredondado)' : '');
-  $('cost-label').textContent = formatMoney.format(result.cost + result.fees);
+  $('cost-label').textContent = formatMoney.format(result.cost);
   $('profit-label').textContent = formatMoney.format(result.profit);
   showCosts(result);
   saveDraft();
