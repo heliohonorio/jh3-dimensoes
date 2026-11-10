@@ -126,7 +126,7 @@ $('settings-form').addEventListener('submit', event => {
 });
 
 function invalidateQuote() {
-  cancelTotalHold();
+  $('total-edit-trigger').setAttribute('aria-expanded', 'false');
   $('price-edit-form').hidden = true;
   $('price-edited-status').hidden = true;
   generation++;
@@ -468,7 +468,7 @@ function displayCalculatedQuote(result, job, scrollToResult = false) {
     ? 'Custo e resultado separados para facilitar sua conferência.'
     : 'Os valores por peça são médias. A soma final utiliza os totais exatos em centavos.';
   $('price-edited-status').hidden = !result.priceEdited;
-  $('price-edit-open').textContent = result.priceEdited ? '✎ Alterar novamente' : '✎ Alterar valor';
+  $('total-edit-trigger').setAttribute('aria-expanded', 'false');
   $('price-edit-form').hidden = true;
   $('price-edit-error').textContent = '';
   showCosts(result, amounts);
@@ -499,49 +499,21 @@ function prepareQuoteImage(result) {
   });
 }
 
-// Segurar o total abre o campo, sem alterar nada por um toque curto.
-let totalHold = null;
-let holdStartX = 0, holdStartY = 0;
-function cancelTotalHold() {
-  if (totalHold !== null) clearTimeout(totalHold);
-  totalHold = null;
-}
+// Somente a caneta abre a edição do preço final.
 function openFinalPriceEditor() {
   if (!current || $('result').hidden) return;
-  cancelTotalHold();
   $('price-edit-error').textContent = '';
   $('price-override').value = '';
   $('price-override').placeholder = formatCurrency(current.price);
   $('price-edit-form').hidden = false;
+  $('total-edit-trigger').setAttribute('aria-expanded', 'true');
   $('price-edit-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
   $('price-override').focus({ preventScroll: true });
 }
-const priceTrigger = $('total-edit-trigger');
-priceTrigger.addEventListener('pointerdown', event => {
-  if (event.button !== 0 || !current) return;
-  cancelTotalHold();
-  holdStartX = event.clientX;
-  holdStartY = event.clientY;
-  totalHold = setTimeout(() => {
-    totalHold = null;
-    openFinalPriceEditor();
-  }, 550);
-});
-priceTrigger.addEventListener('pointermove', event => {
-  if (Math.abs(event.clientX - holdStartX) > 13 ||
-      Math.abs(event.clientY - holdStartY) > 13) cancelTotalHold();
-});
-for (const eventName of ['pointerup', 'pointercancel', 'pointerleave', 'blur']) {
-  priceTrigger.addEventListener(eventName, cancelTotalHold);
-}
-priceTrigger.addEventListener('contextmenu', event => event.preventDefault());
-priceTrigger.addEventListener('click', event => {
-  // Enter e Espaço também abrem a edição por acessibilidade.
-  if (event.detail === 0) openFinalPriceEditor();
-});
-$('price-edit-open').addEventListener('click', openFinalPriceEditor);
+$('total-edit-trigger').addEventListener('click', openFinalPriceEditor);
 $('price-edit-cancel').addEventListener('click', () => {
   $('price-edit-form').hidden = true;
+  $('total-edit-trigger').setAttribute('aria-expanded', 'false');
   $('price-edit-error').textContent = '';
 });
 function applyManualFinalPrice(price) {
