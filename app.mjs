@@ -15,6 +15,7 @@ const electricityUpdateKey = 'jh3-energy-reference-oct-2026-v1';
 
 let settings = null;
 let current = null;
+let currentJob = null;
 let currentFile = null;
 let generation = 0;
 let history = [];
@@ -131,6 +132,7 @@ function invalidateQuote() {
   $('price-edited-status').hidden = true;
   generation++;
   current = null;
+  currentJob = null;
   currentFile = null;
   $('result').hidden = true;
   $('quote-error').textContent = '';
@@ -329,13 +331,15 @@ function saveHistory(result, job) {
     manualPrice: result.priceEdited ? result.price : null,
     date: new Date().toISOString()
   };
-  const isSame = x => x.name === item.name && x.grams === item.grams &&
-    x.quantity === item.quantity && x.hours === item.hours &&
-    x.minutes === item.minutes && x.extras === item.extras &&
-    x.laborMinutes === item.laborMinutes && x.markup === item.markup;
+  // O histórico só é registrado pelas ações de compartilhar ou salvar imagem.
+  // Ao salvar novamente a mesma peça e quantidade, substitui a versão anterior.
+  const normalizeName = value => String(value || '').trim().replace(/\s+/g, ' ').toLocaleLowerCase('pt-BR');
+  const isSame = x => normalizeName(x.name) === normalizeName(item.name) &&
+    Number(x.quantity) === item.quantity;
   history = [item, ...history.filter(x => !isSame(x))].slice(0, 8);
-  storeSet(historyKey, history);
+  const stored = storeSet(historyKey, history);
   renderHistory();
+  return stored;
 }
 function renderHistory() {
   $('history-section').hidden = history.length === 0;
@@ -472,7 +476,7 @@ function displayCalculatedQuote(result, job, scrollToResult = false) {
   $('price-edit-form').hidden = true;
   $('price-edit-error').textContent = '';
   showCosts(result, amounts);
-  saveHistory(result, job);
+  currentJob = { ...job };
   $('copy').disabled = false;
   if (scrollToResult) $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
   prepareQuoteImage(result);
@@ -608,25 +612,45 @@ $('copy').addEventListener('click', copyMessage);
 
 // A arte aprovada fica em quote-image.mjs, com campos preenchidos dinamicamente.
 $('download').addEventListener('click', () => {
-  if (!currentFile) return;
+  if (!currentFile || !current || !currentJob) return;
   const url = URL.createObjectURL(currentFile);
   const link = document.createElement('a');
   link.href = url;
   link.download = currentFile.name;
   document.body.append(link);
-  link.click();
-  link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 30000);
-  $('share-status').textContent = 'Imagem pronta para salvar ou enviar.';
+  try {
+    link.click();
+    const stored = saveHistory(current, currentJob);
+    $('share-status').textContent = stored
+      ? 'Imagem enviada para download. Orçamento salvo no histórico.'
+      : 'Imagem enviada para download, mas o histórico não pôde ser salvo neste aparelho.';
+  } finally {
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+  }
 });
 $('share').addEventListener('click', async () => {
-  if (!current) return;
-  const data = { title: 'JH3 Dimensões', text: messageFor(current) };
+  if (!current || !currentJob) return;
+  // Guarda a versão que foi efetivamente compartilhada, mesmo se o formulário mudar.
+  const sharedResult = current;
+  const sharedJob = currentJob;
+  const data = { title: 'JH3 Dimensões', text: messageFor(sharedResult) };
   if (currentFile && navigator.canShare?.({ files: [currentFile] })) data.files = [currentFile];
   if (navigator.share) {
-    try { await navigator.share(data); return; }
-    catch (error) { if (error?.name === 'AbortError') return; }
+    try {
+      await navigator.share(data);
+      const stored = saveHistory(sharedResult, sharedJob);
+      if (current === sharedResult) {
+        $('share-status').textContent = stored
+          ? 'Orçamento compartilhado e salvo no histórico.'
+          : 'Compartilhado, mas o histórico não pôde ser salvo neste aparelho.';
+      }
+      return;
+    } catch (error) {
+      if (error?.name === 'AbortError') return; // Cancelou: não salva.
+    }
   }
+  // Copiar a mensagem não é confirmação de compartilhamento.
   await copyMessage();
 });
 if ('serviceWorker' in navigator) {
