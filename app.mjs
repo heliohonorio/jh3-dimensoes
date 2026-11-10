@@ -1,4 +1,4 @@
-import { calculate, decimal, defaultSettings, makerWorldModel, parsePercentage, quoteBreakdown } from './calc.mjs';
+import { calculate, decimal, defaultSettings, makerWorldModel, parsePercentage, quoteBreakdown, setFinalQuotePrice } from './calc.mjs';
 import { formatCurrency, installCurrencyMasks } from './currency.mjs';
 import { buildQuoteImage } from './quote-image.mjs';
 import { inspectProjectFile, fetchSlicedFile } from './project-import.mjs';
@@ -126,6 +126,9 @@ $('settings-form').addEventListener('submit', event => {
 });
 
 function invalidateQuote() {
+  cancelTotalHold();
+  $('price-edit-form').hidden = true;
+  $('price-edited-status').hidden = true;
   generation++;
   current = null;
   currentFile = null;
@@ -314,7 +317,7 @@ function showCosts(result, amounts) {
   addCost('Outros gastos', result.extras);
   addCost('Total dos custos', amounts.cost, true);
   if (amounts.fees > 0) addCost('Taxas de venda', amounts.fees);
-  addCost('Lucro da venda', amounts.profit, true);
+  addCost(amounts.profit < 0 ? 'Prejuízo da venda' : 'Lucro da venda', amounts.profit, true);
 }
 
 function saveHistory(result, job) {
@@ -323,6 +326,7 @@ function saveHistory(result, job) {
     grams: job.grams, hours: job.hours, minutes: job.minutes,
     extras: job.extras, laborMinutes: job.laborMinutes,
     markup: job.markup,
+    manualPrice: result.priceEdited ? result.price : null,
     date: new Date().toISOString()
   };
   const isSame = x => x.name === item.name && x.grams === item.grams &&
@@ -346,6 +350,7 @@ function renderHistory() {
     const detail = document.createElement('small');
     const date = new Date(item.date);
     detail.textContent = formatMoney.format(item.price) + ' · ' + item.quantity + ' peça(s)' +
+      (Number.isFinite(item.manualPrice) ? ' · valor ajustado' : '') +
       (Number.isFinite(date.getTime()) ? ' · ' + formatDate.format(date) : '');
     data.append(name, detail);
     const button = document.createElement('button');
@@ -366,6 +371,7 @@ function renderHistory() {
       }
       switchView('quote');
       $('quote-form').requestSubmit();
+      if (Number.isFinite(item.manualPrice)) applyManualFinalPrice(item.manualPrice);
     });
     card.append(data, button);
     list.append(card);
@@ -426,43 +432,142 @@ $('quote-form').addEventListener('submit', event => {
   }
   invalidateQuote();
   current = result;
+  displayCalculatedQuote(result, job, true);
+
+});
+
+
+// Mostra o preço calculado ou ajustado, mantendo as mesmas regras de produção.
+function displayCalculatedQuote(result, job, scrollToResult = false) {
+  const amounts = quoteBreakdown(result, job.quantity);
+  const loss = amounts.profit < 0;
   $('result').hidden = false;
-  // Cada parcela é calculada separadamente, e todas somam o valor final.
   $('cost-per-piece').textContent = formatMoney.format(amounts.costPerPiece);
-  $('profit-per-piece').textContent = formatMoney.format(amounts.profitPerPiece);
-  $('chosen-profit').textContent =
-    job.markup.toLocaleString('pt-BR', { maximumFractionDigits: 4 }) +
-    '% sobre o custo da impressão.';
+  $('profit-per-piece').textContent = formatMoney.format(Math.abs(amounts.profitPerPiece));
+  $('profit-per-piece-title').textContent = loss ? 'Prejuízo por peça' : 'Seu lucro por peça';
+  document.querySelector('.piece-profit').classList.toggle('is-loss', loss);
+  $('chosen-profit').textContent = result.priceEdited
+    ? 'Preço final escolhido por você. Resultado recalculado.'
+    : job.markup.toLocaleString('pt-BR', { maximumFractionDigits: 4 }) + '% sobre o custo da impressão.';
   $('sum-quantity').textContent = job.quantity === 1
     ? 'Soma para 1 peça'
     : 'Soma para as ' + job.quantity + ' peças';
   $('cost-label').textContent = formatMoney.format(amounts.cost);
-  $('profit-label').textContent = formatMoney.format(amounts.profit);
+  $('profit-sign').textContent = loss ? '−' : '+';
+  $('profit-total-title').textContent = loss ? 'Prejuízo' : 'Seu lucro';
+  $('profit-label').textContent = formatMoney.format(Math.abs(amounts.profit));
   $('fees-line').hidden = amounts.fees === 0;
   $('fees-label').textContent = formatMoney.format(amounts.fees);
   $('total').textContent = formatMoney.format(amounts.price);
   $('units').textContent = job.quantity === 1
     ? '1 peça · preço final'
-    : job.quantity + ' peças · ' + formatMoney.format(amounts.pricePerPiece) + ' por peça';
+    : job.quantity + ' peças · ' + (amounts.roundedPerPiece ? 'média de ' : '') +
+      formatMoney.format(amounts.pricePerPiece) + ' por peça' +
+      (amounts.roundedPerPiece ? ' (arredondado)' : '');
   $('unit-explainer').textContent = job.quantity === 1
-    ? 'Valores separados para facilitar a conferência do custo e do lucro.'
-    : 'Total = (custo de 1 peça + lucro de 1 peça) × quantidade.';
+    ? 'Custo e resultado separados para facilitar sua conferência.'
+    : 'Os valores por peça são médias. A soma final utiliza os totais exatos em centavos.';
+  $('price-edited-status').hidden = !result.priceEdited;
+  $('price-edit-open').textContent = result.priceEdited ? '✎ Alterar novamente' : '✎ Alterar valor';
+  $('price-edit-form').hidden = true;
+  $('price-edit-error').textContent = '';
   showCosts(result, amounts);
   saveHistory(result, job);
   $('copy').disabled = false;
-  $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  const version = generation;
-  $('share-status').textContent = 'Preparando a imagem do orçamento...';
+  if (scrollToResult) $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  prepareQuoteImage(result);
+}
+
+function prepareQuoteImage(result) {
+  // Cada atualização invalida a imagem antiga antes de gerar a nova.
+  const version = ++generation;
+  currentFile = null;
+  $('share').disabled = true;
+  $('download').disabled = true;
+  $('share-status').textContent = 'Preparando a imagem com o valor atualizado...';
   buildQuoteImage(result).then(file => {
-    if (generation !== version) return;
+    if (generation !== version || current !== result) return;
     currentFile = file;
     $('share').disabled = false;
     $('download').disabled = false;
     $('share-status').textContent = '';
   }).catch(() => {
-    if (generation === version) $('share-status').textContent =
-      'A imagem não ficou disponível. Você ainda pode copiar a mensagem.';
+    if (generation === version && current === result) {
+      $('share-status').textContent =
+        'A imagem não ficou disponível. Você ainda pode copiar a mensagem.';
+    }
   });
+}
+
+// Segurar o total abre o campo, sem alterar nada por um toque curto.
+let totalHold = null;
+let holdStartX = 0, holdStartY = 0;
+function cancelTotalHold() {
+  if (totalHold !== null) clearTimeout(totalHold);
+  totalHold = null;
+}
+function openFinalPriceEditor() {
+  if (!current || $('result').hidden) return;
+  cancelTotalHold();
+  $('price-edit-error').textContent = '';
+  $('price-override').value = '';
+  $('price-override').placeholder = formatCurrency(current.price);
+  $('price-edit-form').hidden = false;
+  $('price-edit-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  $('price-override').focus({ preventScroll: true });
+}
+const priceTrigger = $('total-edit-trigger');
+priceTrigger.addEventListener('pointerdown', event => {
+  if (event.button !== 0 || !current) return;
+  cancelTotalHold();
+  holdStartX = event.clientX;
+  holdStartY = event.clientY;
+  totalHold = setTimeout(() => {
+    totalHold = null;
+    openFinalPriceEditor();
+  }, 550);
+});
+priceTrigger.addEventListener('pointermove', event => {
+  if (Math.abs(event.clientX - holdStartX) > 13 ||
+      Math.abs(event.clientY - holdStartY) > 13) cancelTotalHold();
+});
+for (const eventName of ['pointerup', 'pointercancel', 'pointerleave', 'blur']) {
+  priceTrigger.addEventListener(eventName, cancelTotalHold);
+}
+priceTrigger.addEventListener('contextmenu', event => event.preventDefault());
+priceTrigger.addEventListener('click', event => {
+  // Enter e Espaço também abrem a edição por acessibilidade.
+  if (event.detail === 0) openFinalPriceEditor();
+});
+$('price-edit-open').addEventListener('click', openFinalPriceEditor);
+$('price-edit-cancel').addEventListener('click', () => {
+  $('price-edit-form').hidden = true;
+  $('price-edit-error').textContent = '';
+});
+function applyManualFinalPrice(price) {
+  if (!current) return;
+  const updated = setFinalQuotePrice(current, price);
+  const job = getJob();
+  const amounts = quoteBreakdown(updated, job.quantity);
+  if (!Number.isFinite(amounts.price)) throw new Error('Não foi possível aplicar o valor.');
+  current = updated;
+  displayCalculatedQuote(updated, job);
+}
+$('price-edit-form').addEventListener('submit', event => {
+  event.preventDefault();
+  const text = $('price-override').value.trim();
+  const amount = decimal(text);
+  if (!text || !Number.isFinite(amount) || amount < 0) {
+    $('price-edit-error').textContent =
+      'Digite o valor total desejado. Ex.: 4300 para R$ 43,00.';
+    $('price-override').focus();
+    return;
+  }
+  try {
+    applyManualFinalPrice(amount);
+  } catch (error) {
+    $('price-edit-error').textContent = error.message || 'Não foi possível alterar o preço.';
+  }
 });
 
 function resetQuoteFields() {
