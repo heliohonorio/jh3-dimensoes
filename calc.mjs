@@ -115,6 +115,36 @@ export function quoteBreakdown(result, quantity) {
   };
 }
 
+
+/**
+ * Permite ao cliente definir o preço final sem alterar o gasto calculado.
+ * O lucro (ou prejuízo) é a diferença entre o preço escolhido e o custo.
+ * Os centavos são arredondados uma única vez para garantir fechamento da soma.
+ */
+export function setFinalQuotePrice(quote, finalPrice) {
+  if (!quote || typeof finalPrice !== 'number' || !Number.isFinite(finalPrice) ||
+      finalPrice < 0 || !Number.isInteger(quote.quantity) || quote.quantity < 1 ||
+      ![quote.cost, quote.fees, quote.price].every(Number.isFinite)) {
+    throw new Error('Informe um preço final válido, igual ou maior que zero.');
+  }
+  const cents = Math.round(finalPrice * 100);
+  const costCents = Math.round(quote.cost * 100);
+  const feeCents = Math.round(quote.fees * 100);
+  if (![cents, costCents, feeCents].every(Number.isSafeInteger)) {
+    throw new Error('O valor informado é muito alto para calcular com segurança.');
+  }
+  const price = cents / 100;
+  const profit = (cents - costCents - feeCents) / 100;
+  return {
+    ...quote,
+    price,
+    profit,
+    unit: price / quote.quantity,
+    actualMargin: price > 0 ? profit / price * 100 : 0,
+    priceEdited: true
+  };
+}
+
 export function makerWorldModel(value) {
   const url = new URL(String(value).trim());
   if (url.protocol !== 'https:' || url.port || url.username || url.password ||
