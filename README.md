@@ -17,9 +17,9 @@ A engrenagem discreta no cabeçalho abre **Meus custos**. Na primeira utilizaç�
 2. Confira ou preencha os gramas, o tempo e a quantidade da impressão.
 3. Escolha **um lucro desejado** para esse pedido: **25%, 50%, 75%, 100%, 150% ou Personalizado**.
 4. Toque em **Calcular e somar tudo**. O resultado apresenta custo por peça, lucro por peça e a soma final.
-5. Confira e compartilhe com o cliente.
+5. Confira e compartilhe com o cliente ou salve a imagem. Só essas ações registram o orçamento no histórico. Recalcular, editar o preço ou copiar a mensagem não salva o orçamento.
 
-**Ajustar o preço final:** depois de calcular, **toque na caneta ao lado do valor total** para abrir o campo de edição. Digite apenas números: `4300` vira **R$ 43,00**, `4200` vira **R$ 42,00**. Ao confirmar, o custo de produção não muda; o lucro é recalculado e a imagem do orçamento, o histórico e os valores por peça passam a usar o preço escolhido. Caso o preço fique abaixo do custo, o sistema informa o prejuízo. A mensagem enviada ao cliente continua sem preços; somente a imagem mostra os valores.
+**Ajustar o preço final:** depois de calcular, **toque na caneta ao lado do valor total** para abrir o campo de edição. Digite apenas números: `4300` vira **R$ 43,00**, `4200` vira **R$ 42,00**. Ao confirmar, o custo de produção não muda; o lucro é recalculado e a imagem do orçamento, os valores por peça passam a usar o preço escolhido. O histórico é atualizado somente se você compartilhar ou salvar a imagem. Caso o preço fique abaixo do custo, o sistema informa o prejuízo. A mensagem enviada ao cliente continua sem preços; somente a imagem mostra os valores.
 
 O botão **Voltar ao início** permite mudar de caminho. **Limpar dados** inicia outro formulário sem apagar os custos configurados ou o histórico.
 
