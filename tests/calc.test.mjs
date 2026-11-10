@@ -261,7 +261,8 @@ test('arredonda preço final livremente sem mexer no custo de produção', () =>
     const breakdown = quoteBreakdown(item, 3);
     assert.equal(Math.round((breakdown.cost + breakdown.profit + breakdown.fees) * 100),
       Math.round(item.price * 100));
-    assert.equal(breakdown.roundedPerPiece, true, 'média unitária arredondada');
+    assert.equal(breakdown.roundedPerPiece, item.price === 43,
+      'a média só é arredondada quando não fecha em centavos por peça');
   }
 });
 
