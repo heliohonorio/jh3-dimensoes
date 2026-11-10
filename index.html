@@ -133,7 +133,7 @@
       <span class="piece-card-help">Filamento, energia e outros gastos, sem lucro.</span>
     </div>
     <div class="piece-card piece-profit">
-      <span class="piece-card-title">Seu lucro por peça</span>
+      <span class="piece-card-title" id="profit-per-piece-title">Seu lucro por peça</span>
       <output id="profit-per-piece" class="piece-amount">—</output>
       <span class="piece-card-help" id="chosen-profit">Lucro escolhido para este pedido.</span>
     </div>
@@ -148,7 +148,7 @@
       <strong id="cost-label">—</strong>
     </div>
     <div class="sum-line">
-      <span><span aria-hidden="true" class="sum-plus">+</span> Seu lucro</span>
+      <span><span aria-hidden="true" class="sum-plus" id="profit-sign">+</span> <span id="profit-total-title">Seu lucro</span></span>
       <strong id="profit-label">—</strong>
     </div>
     <div class="sum-line" id="fees-line" hidden>
@@ -157,10 +157,28 @@
     </div>
     <div class="sum-total">
       <p class="eyebrow">TOTAL PARA COBRAR DO CLIENTE</p>
-      <output id="total" class="price" aria-live="polite">—</output>
+      <button id="total-edit-trigger" class="total-edit-trigger" type="button"
+        aria-label="Segure para alterar o preço final" aria-describedby="price-edit-hint">
+        <output id="total" class="price" aria-live="polite">—</output>
+        <span class="total-edit-symbol" aria-hidden="true">✎</span>
+      </button>
       <p id="units" class="units"></p>
+      <p id="price-edit-hint" class="price-edit-hint">Toque e segure o valor para alterar o preço final.</p>
+      <button id="price-edit-open" class="price-edit-open" type="button">✎ Alterar valor</button>
+      <form id="price-edit-form" class="price-edit-form" hidden novalidate>
+        <label for="price-override">Qual valor total deseja cobrar?</label>
+        <input id="price-override" data-currency inputmode="numeric" autocomplete="off"
+          placeholder="R$ 0,00" aria-describedby="price-edit-helper">
+        <p id="price-edit-helper" class="helper">Digite apenas números. Ex.: 4300 vira R$ 43,00.</p>
+        <p id="price-edit-error" class="error" role="alert"></p>
+        <div class="price-edit-actions">
+          <button type="submit" class="button-primary">Usar este valor</button>
+          <button type="button" id="price-edit-cancel" class="button-outline">Cancelar</button>
+        </div>
+      </form>
+      <p id="price-edited-status" class="price-edited-status" hidden role="status">Preço ajustado por você.</p>
     </div>
-    <p class="helper sum-note">O custo da impressão não muda quando você escolhe outro lucro. Só muda o preço que será cobrado.</p>
+    <p class="helper sum-note">O custo da impressão permanece igual. Se alterar o preço final, o lucro será recalculado automaticamente.</p>
   </div>
 
   <details class="expandable result-details"><summary><span class="summary-label"><strong>Ver os gastos da impressão</strong><small>Filamento, energia, desgaste e demais custos</small></span><span class="expand-icon" aria-hidden="true"></span></summary>
