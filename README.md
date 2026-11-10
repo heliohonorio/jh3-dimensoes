@@ -37,6 +37,18 @@ O custo de produção é calculado para **a impressão inteira** e dividido pela
 
 A leitura dos arquivos é local e não envia arquivos para um servidor.
 
+## Orçamento enviado ao cliente
+
+A imagem oficial segue a identidade visual JH3 DIMENSÕES: fundo escuro, impressão 3D e destaque ciano para o total. A imagem é montada para cada pedido, com o nome real do projeto, a quantidade e o preço final. Nenhum custo interno nem lucro é exibido.
+
+A mensagem enviada junto à imagem contém **somente**:
+
+> JH3 DIMENSÕES
+>
+> Segue orçamento do seu Projeto 3D.
+
+Os valores e a quantidade aparecem apenas na imagem, nunca no texto compartilhado. O mesmo vale para copiar a mensagem.
+
 ## Privacidade
 
 O projeto usa HTML, CSS e JavaScript estáticos, sem banco de dados. Custos e os últimos oito orçamentos são armazenados apenas no aparelho e não sincronizam com outros celulares ou computadores. Novos acessos começam sempre na tela inicial, sem recuperar automaticamente um orçamento em andamento. O orçamento enviado ao cliente não revela os custos internos nem o lucro.
