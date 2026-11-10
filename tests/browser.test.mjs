@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { mkdir } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { deflateRawSync } from 'node:zlib';
 import { chromium } from 'playwright';
 
@@ -210,6 +210,19 @@ try {
   assert.ok(shareData.bytes > 25000, 'a arte oficial foi gerada com conteúdo visual');
   assert.doesNotMatch(shareData.text, /Quantidade|R\$|Lucro|Filamento|Chaveiro/,
     'nenhuma quantidade ou preço deve aparecer na mensagem enviada');
+  // Salva uma imagem real do orçamento gerada pelo navegador para inspeção visual.
+  const png64 = await page.evaluate(async () => {
+    const file = window.__sharedQuote.files[0];
+    const dataUrl = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+    return dataUrl.split(',')[1];
+  });
+  await mkdir('screenshots', { recursive: true });
+  await writeFile('screenshots/orcamento-oficial.png', Buffer.from(png64, 'base64'));
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true, 'tela sem rolagem horizontal');
   await mkdir('screenshots', { recursive: true });
   await page.screenshot({ path: 'screenshots/mobile.png', fullPage: true });
