@@ -48,6 +48,13 @@ try {
       window.__quoteCanvasTexts.push(String(text));
       return draw.call(this, text, ...args);
     };
+    // Captura o compartilhamento sem abrir o diálogo do sistema operacional.
+    Object.defineProperty(navigator, 'canShare', {
+      configurable: true, value: () => true
+    });
+    Object.defineProperty(navigator, 'share', {
+      configurable: true, value: async data => { window.__sharedQuote = data; }
+    });
   });
   await page.goto('http://127.0.0.1:8765/', { waitUntil: 'networkidle' });
 
@@ -176,6 +183,33 @@ try {
   assert.equal(await page.evaluate(() => window.__quoteCanvasTexts.includes('Chaveiro JH3')), true,
     'o nome escolhido precisa aparecer na imagem de orçamento');
   assert.equal(await page.locator('#copy').isEnabled(), true, 'pode copiar orçamento');
+  assert.equal(await page.evaluate(() => fetch('./assets/printer-art.base64').then(r => r.ok)),
+    true, 'a imagem da impressora usada no modelo aprovado está publicada');
+  await page.locator('#share').click();
+  const shareData = await page.evaluate(async () => {
+    const quote = window.__sharedQuote;
+    if (!quote) return null;
+    const file = quote.files?.[0];
+    const bitmap = file ? await createImageBitmap(file) : null;
+    return {
+      text: quote.text,
+      fileName: file?.name,
+      mime: file?.type,
+      width: bitmap?.width,
+      height: bitmap?.height,
+      bytes: file?.size
+    };
+  });
+  assert.ok(shareData, 'botão compartilha a imagem com o texto');
+  assert.equal(shareData.text,
+    'JH3 DIMENSÕES\nSegue orçamento do seu Projeto 3D.',
+    'mensagem contém só o nome da empresa e a saudação aprovada');
+  assert.equal(shareData.mime, 'image/png', 'orçamento é uma imagem');
+  assert.equal(shareData.width, 1122);
+  assert.equal(shareData.height, 1402);
+  assert.ok(shareData.bytes > 25000, 'a arte oficial foi gerada com conteúdo visual');
+  assert.doesNotMatch(shareData.text, /Quantidade|R\$|Lucro|Filamento|Chaveiro/,
+    'nenhuma quantidade ou preço deve aparecer na mensagem enviada');
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true, 'tela sem rolagem horizontal');
   await mkdir('screenshots', { recursive: true });
   await page.screenshot({ path: 'screenshots/mobile.png', fullPage: true });
