@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { calculate, decimal, defaultSettings, makerWorldModel, parsePercentage, quoteBreakdown } from '../calc.mjs';
+import { calculate, decimal, defaultSettings, makerWorldModel, parsePercentage, quoteBreakdown, setFinalQuotePrice } from '../calc.mjs';
 
 test('aceita valores brasileiros e rejeita entradas ambíguas', () => {
   assert.equal(decimal('90,50'), 90.5);
@@ -234,4 +234,46 @@ test('caso da imagem fecha duas peças em R$ 12,18 com lucro de 50%', () => {
   assert.equal(view.cost, 8.12);
   assert.equal(view.profit, 4.06);
   assert.equal(view.price, 12.18);
+});
+
+
+test('arredonda preço final livremente sem mexer no custo de produção', () => {
+  const settings = { ...defaultSettings, rollPrice: 1000, rollGrams: 1000,
+    tariff: 0, watts: 0, wear: 0, waste: 0, failure: 0, fee: 0,
+    laborHourly: 0, minPrice: 0 };
+  const original = { ...calculate(settings, {
+    grams: 27.28, quantity: 3, hours: 1, minutes: 0, markup: 50
+  }), name: 'Projeto Teste', quantity: 3 };
+  assert.equal(original.price, 40.92);
+  const roundedUp = setFinalQuotePrice(original, 43);
+  const roundedDown = setFinalQuotePrice(original, 42);
+  assert.equal(roundedUp.cost, original.cost);
+  assert.equal(roundedDown.cost, original.cost);
+  assert.equal(roundedUp.price, 43);
+  assert.equal(roundedDown.price, 42);
+  assert.equal(roundedUp.profit, 15.73);
+  assert.equal(roundedDown.profit, 14.73);
+  assert.equal(roundedUp.quantity, original.quantity);
+  assert.equal(roundedUp.name, original.name);
+  assert.equal(roundedUp.priceEdited, true);
+  assert.equal(original.priceEdited, undefined, 'o cálculo original não é alterado');
+  for (const item of [roundedUp, roundedDown]) {
+    const breakdown = quoteBreakdown(item, 3);
+    assert.equal(Math.round((breakdown.cost + breakdown.profit + breakdown.fees) * 100),
+      Math.round(item.price * 100));
+    assert.equal(breakdown.roundedPerPiece, true, 'média unitária arredondada');
+  }
+});
+
+test('valor livre pode ficar abaixo do custo e mostra prejuízo corretamente', () => {
+  const quote = { name: 'Teste', quantity: 1, cost: 10, price: 20, profit: 10, fees: 0, unit: 20 };
+  const discounted = setFinalQuotePrice(quote, 8);
+  assert.equal(discounted.cost, 10);
+  assert.equal(discounted.price, 8);
+  assert.equal(discounted.profit, -2);
+  assert.equal(discounted.unit, 8);
+  assert.equal(setFinalQuotePrice(quote, 0).profit, -10);
+  assert.throws(() => setFinalQuotePrice(quote, -1), /preço final válido/);
+  assert.throws(() => setFinalQuotePrice(quote, NaN), /preço final válido/);
+  assert.throws(() => setFinalQuotePrice(quote, Number.MAX_VALUE), /alto/);
 });
