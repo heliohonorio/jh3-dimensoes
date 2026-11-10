@@ -1,5 +1,6 @@
 import { calculate, decimal, defaultSettings, makerWorldModel, parsePercentage, quoteBreakdown } from './calc.mjs';
 import { formatCurrency, installCurrencyMasks } from './currency.mjs';
+import { buildQuoteImage } from './quote-image.mjs';
 import { inspectProjectFile, fetchSlicedFile } from './project-import.mjs';
 
 const $ = id => document.getElementById(id);
@@ -11,8 +12,6 @@ const oldSettingsKey = 'jh3-preferences-v1';
 const draftKey = 'jh3-draft-v2';
 const historyKey = 'jh3-history-v1';
 const electricityUpdateKey = 'jh3-energy-reference-oct-2026-v1';
-const logo = new Image();
-logo.src = './logo.webp';
 
 let settings = null;
 let current = null;
@@ -454,7 +453,7 @@ $('quote-form').addEventListener('submit', event => {
   $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
   const version = generation;
   $('share-status').textContent = 'Preparando a imagem do orçamento...';
-  buildImage(result).then(file => {
+  buildQuoteImage(result).then(file => {
     if (generation !== version) return;
     currentFile = file;
     $('share').disabled = false;
@@ -530,122 +529,7 @@ async function copyMessage() {
 }
 $('copy').addEventListener('click', copyMessage);
 
-function contain(ctx, image, x, y, w, h) {
-  const scale = Math.min(w / image.naturalWidth, h / image.naturalHeight);
-  const rw = image.naturalWidth * scale, rh = image.naturalHeight * scale;
-  ctx.drawImage(image, x + (w - rw) / 2, y + (h - rh) / 2, rw, rh);
-}
-// Escreve o nome real do projeto na imagem, ajustando até três linhas.
-// O limite do campo da peça é de 90 caracteres e todo o texto deve caber.
-function drawProjectName(ctx, name) {
-  const title = String(name ?? '').trim().replace(/\s+/g, ' ') || 'Peça impressa em 3D';
-  const maxWidth = 840;
-  const maxLines = 3;
-  const splitWord = word => {
-    const chars = Array.from(word);
-    const parts = [];
-    let current = '';
-    for (const char of chars) {
-      if (current && ctx.measureText(current + char).width > maxWidth) {
-        parts.push(current);
-        current = char;
-      } else {
-        current += char;
-      }
-    }
-    if (current) parts.push(current);
-    return parts;
-  };
-  const linesAtFontSize = size => {
-    ctx.font = 'bold ' + size + 'px system-ui';
-    const lines = [];
-    let line = '';
-    for (const word of title.split(' ')) {
-      const parts = ctx.measureText(word).width > maxWidth ? splitWord(word) : [word];
-      for (const part of parts) {
-        const candidate = line ? line + ' ' + part : part;
-        if (ctx.measureText(candidate).width <= maxWidth) {
-          line = candidate;
-        } else {
-          if (line) lines.push(line);
-          line = part;
-        }
-      }
-    }
-    if (line) lines.push(line);
-    return lines;
-  };
-  let size = 48;
-  let lines = linesAtFontSize(size);
-  while (lines.length > maxLines && size > 22) {
-    size -= 2;
-    lines = linesAtFontSize(size);
-  }
-  // Mantém o nome inteiro visível mesmo quando for extenso.
-  if (lines.length > maxLines) {
-    size = 22;
-    lines = linesAtFontSize(size);
-  }
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'alphabetic';
-  ctx.fillStyle = '#f5f8fb';
-  ctx.font = 'bold ' + size + 'px system-ui';
-  const lineHeight = size * 1.17;
-  const centerY = 611;
-  lines.forEach((text, index) => {
-    const y = centerY - (lines.length - 1) * lineHeight / 2 + index * lineHeight;
-    ctx.fillText(text, 540, y, maxWidth);
-  });
-}
-
-async function buildImage(result) {
-  const canvas = document.createElement('canvas');
-  canvas.width = 1080;
-  canvas.height = 1350;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Canvas indisponível.');
-  ctx.fillStyle = '#0b1018';
-  ctx.fillRect(0, 0, 1080, 1350);
-  ctx.fillStyle = '#132535';
-  ctx.fillRect(60, 60, 960, 1230);
-  ctx.strokeStyle = '#395b6e';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(60, 60, 960, 1230);
-  try {
-    if (!logo.complete) await logo.decode();
-    if (logo.naturalWidth) contain(ctx, logo, 342, 90, 400, 315);
-  } catch {}
-  ctx.textAlign = 'center';
-  if (!logo.naturalWidth) {
-    ctx.fillStyle = '#66d8ec';
-    ctx.font = 'bold 65px system-ui';
-    ctx.fillText('JH3 DIMENSÕES', 540, 260);
-  }
-  ctx.fillStyle = '#66d8ec';
-  ctx.font = 'bold 30px system-ui';
-  ctx.fillText('ORÇAMENTO DE IMPRESSÃO 3D', 540, 490);
-  ctx.fillStyle = '#bed2de';
-  ctx.font = '24px system-ui';
-  ctx.fillText('PROJETO / PEÇA', 540, 539);
-  drawProjectName(ctx, result.name);
-  ctx.fillStyle = '#bed2de';
-  ctx.font = '36px system-ui';
-  ctx.fillText('Quantidade: ' + result.quantity + (result.quantity === 1 ? ' peça' : ' peças'), 540, 724);
-  ctx.strokeStyle = '#3b6173';
-  ctx.beginPath();
-  ctx.moveTo(185, 785);
-  ctx.lineTo(895, 785);
-  ctx.stroke();
-  ctx.fillStyle = '#c2d4df';
-  ctx.font = '27px system-ui';
-  ctx.fillText('VALOR TOTAL', 540, 865);
-  ctx.fillStyle = '#66d8ec';
-  ctx.font = 'bold 90px system-ui';
-  ctx.fillText(formatMoney.format(result.price), 540, 978, 850);
-  const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-  if (!blob) throw new Error('Imagem indisponível.');
-  return new File([blob], 'Orcamento-JH3-Dimensoes.png', { type: 'image/png' });
-}
+// A arte aprovada fica em quote-image.mjs, com campos preenchidos dinamicamente.
 $('download').addEventListener('click', () => {
   if (!currentFile) return;
   const url = URL.createObjectURL(currentFile);
