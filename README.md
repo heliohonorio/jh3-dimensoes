@@ -2,17 +2,24 @@
 
 Calculadora de impressão 3D para uso diário da família JH3, em celular ou computador, com tema escuro e instalação como PWA.
 
-## Primeiro acesso
+## Tela inicial
 
-Abra a guia **Meus custos** e revise os valores da empresa: rolo, energia, desgaste, taxas e outros itens. Salve uma única vez. As preferências são guardadas no navegador desse aparelho.
+O aplicativo começa **somente com duas opções grandes**:
 
-## Novo orçamento
+- **Importar projeto:** abre uma página própria para escolher um arquivo do celular ou colar um link. Quando conseguir ler dados, aparece **Continuar com este projeto**. Só então o formulário do orçamento é aberto, com o nome, peso e tempo preenchidos quando disponíveis.
+- **Novo orçamento:** abre diretamente o formulário manual com os dados da peça, outros gastos e lucro, **sem mostrar a área de importação**.
 
-1. Opcionalmente, abra **Importar projeto** e escolha um arquivo **.gcode.3mf** ou **.gcode** já fatiado no Bambu Studio/Orca. Peso, tempo, material, impressora e placas são extraídos quando constam do arquivo. O usuário deve conferir a quantidade de peças.
-2. Ou informe os gramas, o tempo e a quantidade manualmente.
-3. Selecione **um lucro desejado** por orçamento: **25%, 50%, 75%, 100%, 150% ou Personalizado**.
-4. Toque em **Calcular e somar tudo**. O resultado separa o custo médio para produzir cada peça, o lucro médio por peça e, abaixo, a soma do custo do pedido + lucro + eventuais taxas = total de venda.
-5. Confira a soma e compartilhe o orçamento com o cliente.
+A engrenagem discreta no cabeçalho abre **Meus custos**. Na primeira utilização, configure o preço do rolo, conta de luz, desgaste e demais valores. Os custos ficam salvos somente no navegador do aparelho.
+
+## Como calcular
+
+1. Escolha **Novo orçamento** ou **Importar projeto** na tela inicial.
+2. Confira ou preencha os gramas, o tempo e a quantidade da impressão.
+3. Escolha **um lucro desejado** para esse pedido: **25%, 50%, 75%, 100%, 150% ou Personalizado**.
+4. Toque em **Calcular e somar tudo**. O resultado apresenta custo por peça, lucro por peça e a soma final.
+5. Confira e compartilhe com o cliente.
+
+O botão **Voltar ao início** permite mudar de caminho. **Limpar dados** inicia outro formulário sem apagar os custos configurados ou o histórico.
 
 **O lucro é um acréscimo sobre o custo, não uma margem sobre o preço de venda.** O campo Personalizado não tem teto percentual predefinido: aceita 1.000%, 2.500%, 10.000% e outros percentuais que possam ser calculados com segurança. Fórmula: preço = custo × (1 + percentual ÷ 100) ÷ (1 − taxa ÷ 100). Exemplo sem taxas: custo R$ 10,00 + 100% = venda R$ 20,00; + 1.000% = R$ 110,00; + 2.500% = R$ 260,00. Com taxas, o cálculo preserva o acréscimo escolhido sobre o custo. O preço mínimo opcional também continua válido.
 
@@ -32,7 +39,7 @@ A leitura dos arquivos é local e não envia arquivos para um servidor.
 
 ## Privacidade
 
-O projeto usa HTML, CSS e JavaScript estáticos, sem banco de dados. Custos, rascunhos e os últimos oito orçamentos são armazenados apenas no aparelho e não sincronizam com outros celulares ou computadores. O orçamento enviado ao cliente não revela os custos internos nem o lucro.
+O projeto usa HTML, CSS e JavaScript estáticos, sem banco de dados. Custos e os últimos oito orçamentos são armazenados apenas no aparelho e não sincronizam com outros celulares ou computadores. Novos acessos começam sempre na tela inicial, sem recuperar automaticamente um orçamento em andamento. O orçamento enviado ao cliente não revela os custos internos nem o lucro.
 
 ## Publicação
 
