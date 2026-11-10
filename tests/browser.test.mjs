@@ -487,6 +487,103 @@ try {
   assert.equal(await oldPage.locator('#wear').inputValue(), 'R$ 3,50', 'desgaste preservado');
   assert.equal(await oldPage.locator('input[name="markup"][value="50"]').isChecked(), true, 'lucro inicial definido no orçamento');
   await oldPage.close();
+
+  // Ajuste opcional do valor final por toque prolongado, inclusive abaixo do custo.
+  const pricingPage = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
+  const pricingErrors = [];
+  pricingPage.on('pageerror', error => pricingErrors.push(error.message));
+  await pricingPage.addInitScript(() => {
+    localStorage.setItem('jh3-energy-reference-oct-2026-v1', 'true');
+    localStorage.setItem('jh3-preferences-v2', JSON.stringify({
+      rollPrice: 1000, rollGrams: 1000, tariff: 0, watts: 0, wear: 0,
+      waste: 0, failure: 0, margin: 30, fee: 0, laborHourly: 0, minPrice: 0
+    }));
+    window.__pricingCanvasTexts = [];
+    const original = CanvasRenderingContext2D.prototype.fillText;
+    CanvasRenderingContext2D.prototype.fillText = function (txt, ...args) {
+      window.__pricingCanvasTexts.push(String(txt));
+      return original.call(this, txt, ...args);
+    };
+    Object.defineProperty(navigator, 'canShare', { configurable: true, value: () => true });
+    Object.defineProperty(navigator, 'share', {
+      configurable: true,
+      value: async data => { window.__pricingShared = data; }
+    });
+  });
+  await pricingPage.goto('http://127.0.0.1:8765/', { waitUntil: 'networkidle' });
+  await pricingPage.locator('#home-new-quote').click();
+  await pricingPage.locator('#piece').fill('Projeto com preço livre');
+  await pricingPage.locator('#grams').fill('27,28');
+  await pricingPage.locator('#quantity').fill('3');
+  await pricingPage.locator('#hours').fill('1');
+  await pricingPage.locator('#quote-form button[type=submit]').click();
+  await pricingPage.waitForFunction(() => !document.querySelector('#share').disabled);
+  assert.equal((await pricingPage.locator('#total').textContent()).replace(/\s/g, ' '), 'R$ 40,92');
+  const originalCost = await pricingPage.locator('#cost-label').textContent();
+  assert.equal(originalCost.replace(/\s/g, ' '), 'R$ 27,27');
+
+  // Toque curto não abre o campo; segurar por cerca de 0,6 segundo abre.
+  await pricingPage.locator('#total-edit-trigger').click();
+  assert.equal(await pricingPage.locator('#price-edit-form').isVisible(), false,
+    'um toque rápido não edita o orçamento sem querer');
+  await pricingPage.locator('#total-edit-trigger').scrollIntoViewIfNeeded();
+  const priceRect = await pricingPage.locator('#total-edit-trigger').boundingBox();
+  await pricingPage.mouse.move(priceRect.x + 40, priceRect.y + priceRect.height / 2);
+  await pricingPage.mouse.down();
+  await pricingPage.waitForTimeout(650);
+  await pricingPage.mouse.up();
+  assert.equal(await pricingPage.locator('#price-edit-form').isVisible(), true,
+    'pressionar e segurar o valor abre a edição');
+  assert.equal(await pricingPage.locator('#price-override').inputValue(), '',
+    'campo começa vazio para substituir o valor sem apagar dígitos');
+  await pricingPage.locator('#price-override').pressSequentially('4300');
+  assert.equal((await pricingPage.locator('#price-override').inputValue()).replace(/\s/g, ' '),
+    'R$ 43,00', 'máscara monetária funciona enquanto digita');
+  await pricingPage.locator('#price-edit-form button[type=submit]').click();
+  assert.equal((await pricingPage.locator('#total').textContent()).replace(/\s/g, ' '),
+    'R$ 43,00', 'preço de venda foi ajustado');
+  assert.equal(await pricingPage.locator('#cost-label').textContent(), originalCost,
+    'o custo da impressão não é alterado');
+  assert.equal((await pricingPage.locator('#profit-label').textContent()).replace(/\s/g, ' '),
+    'R$ 15,73', 'o lucro é recalculado pelo valor novo');
+  assert.equal(await pricingPage.locator('#price-edited-status').isVisible(), true);
+  assert.equal(await pricingPage.locator('#share').isEnabled(), false,
+    'imagem anterior não pode ser compartilhada durante atualização');
+  await pricingPage.waitForFunction(() => !document.querySelector('#share').disabled);
+  assert.ok(await pricingPage.evaluate(() =>
+    window.__pricingCanvasTexts.some(value => value.replace(/\s/g, ' ').includes('R$ 43,00'))),
+    'o PNG da JH3 traz o novo preço');
+  await pricingPage.locator('#share').click();
+  const shared = await pricingPage.evaluate(async () => ({
+    text: window.__pricingShared?.text,
+    image: window.__pricingShared?.files?.[0]?.name
+  }));
+  assert.equal(shared.text, 'JH3 DIMENSÕES\nSegue orçamento do seu Projeto 3D.');
+  assert.ok(shared.image?.endsWith('.png'), 'nova imagem é enviada sem números na mensagem');
+
+  // Alterar para baixo também deve ser permitido e persistir no histórico.
+  await pricingPage.locator('#price-edit-open').click();
+  await pricingPage.locator('#price-override').fill('4200');
+  await pricingPage.locator('#price-edit-form button[type=submit]').click();
+  assert.equal((await pricingPage.locator('#total').textContent()).replace(/\s/g, ' '), 'R$ 42,00');
+  assert.equal((await pricingPage.locator('#profit-label').textContent()).replace(/\s/g, ' '), 'R$ 14,73');
+  await pricingPage.locator('#price-edit-open').click();
+  await pricingPage.locator('#price-override').fill('2000');
+  await pricingPage.locator('#price-edit-form button[type=submit]').click();
+  assert.equal((await pricingPage.locator('#total').textContent()).replace(/\s/g, ' '), 'R$ 20,00');
+  assert.equal(await pricingPage.locator('#profit-total-title').textContent(), 'Prejuízo');
+  assert.equal((await pricingPage.locator('#profit-label').textContent()).replace(/\s/g, ' '), 'R$ 7,27');
+  assert.equal(await pricingPage.locator('#cost-label').textContent(), originalCost);
+  const savedPrice = await pricingPage.evaluate(() =>
+    JSON.parse(localStorage.getItem('jh3-history-v1'))[0].manualPrice);
+  assert.equal(savedPrice, 20, 'valor alterado fica salvo no histórico');
+  await pricingPage.locator('#new-quote-result').click();
+  await pricingPage.locator('#history-list button').first().click();
+  assert.equal((await pricingPage.locator('#total').textContent()).replace(/\s/g, ' '),
+    'R$ 20,00', 'recuperar orçamento mantém preço ajustado');
+  assert.deepEqual(pricingErrors, [], 'sem erros ao ajustar o preço no navegador');
+  await pricingPage.close();
+
   assert.deepEqual(errors, [], 'sem erros de script no navegador');
   console.log('Navegação, custos, rascunho, cálculo, imagem, histórico e responsividade: OK.');
 } finally {
