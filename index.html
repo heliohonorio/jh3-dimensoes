@@ -157,14 +157,14 @@
     </div>
     <div class="sum-total">
       <p class="eyebrow">TOTAL PARA COBRAR DO CLIENTE</p>
-      <button id="total-edit-trigger" class="total-edit-trigger" type="button"
-        aria-label="Segure para alterar o preço final" aria-describedby="price-edit-hint">
+      <div class="total-value-row">
         <output id="total" class="price" aria-live="polite">—</output>
-        <span class="total-edit-symbol" aria-hidden="true">✎</span>
-      </button>
+        <button id="total-edit-trigger" class="total-edit-trigger" type="button"
+          aria-label="Editar valor total" aria-controls="price-edit-form" aria-expanded="false">
+          <span class="total-edit-symbol" aria-hidden="true">✎</span>
+        </button>
+      </div>
       <p id="units" class="units"></p>
-      <p id="price-edit-hint" class="price-edit-hint">Toque e segure o valor para alterar o preço final.</p>
-      <button id="price-edit-open" class="price-edit-open" type="button">✎ Alterar valor</button>
       <form id="price-edit-form" class="price-edit-form" hidden novalidate>
         <label for="price-override">Qual valor total deseja cobrar?</label>
         <input id="price-override" data-currency inputmode="numeric" autocomplete="off"
