@@ -67,7 +67,7 @@ try {
   assert.equal(await page.locator('#quote-view').isVisible(), false, 'sem campos do orçamento na importação');
   const importSummary = page.locator('#project-import > summary');
   assert.equal(await importSummary.evaluate(node => getComputedStyle(node).backgroundColor),
-    'rgb(47, 184, 121)', 'importação permanece verde');
+    'rgb(60, 198, 135)', 'importação aberta permanece verde');
   assert.ok(await importSummary.evaluate(node => node.getBoundingClientRect().height >= 70),
     'área de importação grande');
   assert.equal(await page.locator('#project-import').getAttribute('open'), '',
