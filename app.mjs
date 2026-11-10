@@ -218,6 +218,15 @@ function applyImportedProject(data) {
   if (current) invalidateQuote();
 }
 
+$('model-link').addEventListener('input', () => {
+  // Um novo endereço exige verificação antes de continuar com o projeto.
+  $('import-continue').hidden = true;
+  $('model-status').textContent = '';
+  $('model-page').hidden = true;
+  $('import-info').hidden = true;
+  $('imported-note').hidden = true;
+});
+
 $('project-file').addEventListener('change', async () => {
   const file = $('project-file').files?.[0];
   if (!file) return;
