@@ -505,12 +505,9 @@ $('home-import').addEventListener('click', () => {
 $('clear').addEventListener('click', startNewQuote);
 $('new-quote-result').addEventListener('click', startNewQuote);
 
-function messageFor(result) {
-  return [
-    'JH3 DIMENSÕES — Orçamento', '',
-    'Quantidade: ' + result.quantity + (result.quantity === 1 ? ' peça' : ' peças'),
-    'Valor total: ' + formatMoney.format(result.price)
-  ].join('\n');
+function messageFor() {
+  // O cliente recebe o nome da empresa e esta mensagem; os valores ficam só na imagem.
+  return 'JH3 DIMENSÕES\nSegue orçamento do seu Projeto 3D.';
 }
 async function copyMessage() {
   if (!current) return;
