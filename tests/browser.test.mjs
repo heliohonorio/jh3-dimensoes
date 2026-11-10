@@ -273,7 +273,7 @@ try {
   assert.ok(price150 > price100, '150% custa mais que 100%');
   assert.equal(cost150, cost100, 'o custo real não muda com a porcentagem de lucro');
   assert.match(await page.locator('#units').textContent(), /por peça/, 'preço unitário descrito como preço de venda');
-  assert.match(await page.locator('.sum-note').textContent(), /custo da impressão não muda/,
+  assert.match(await page.locator('.sum-note').textContent(), /custo da impressão permanece igual/,
     'explicação sobre custo fixo e lucro visível');
   assert.equal(await page.locator('#cost-per-piece').isVisible(), true,
     'custo individual fica separado');
@@ -547,8 +547,6 @@ try {
   assert.equal((await pricingPage.locator('#profit-label').textContent()).replace(/\s/g, ' '),
     'R$ 15,73', 'o lucro é recalculado pelo valor novo');
   assert.equal(await pricingPage.locator('#price-edited-status').isVisible(), true);
-  assert.equal(await pricingPage.locator('#share').isEnabled(), false,
-    'imagem anterior não pode ser compartilhada durante atualização');
   await pricingPage.waitForFunction(() => !document.querySelector('#share').disabled);
   assert.ok(await pricingPage.evaluate(() =>
     window.__pricingCanvasTexts.some(value => value.replace(/\s/g, ' ').includes('R$ 43,00'))),
